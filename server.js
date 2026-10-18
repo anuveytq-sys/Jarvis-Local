@@ -239,21 +239,48 @@ function detectClientPlatform(req) {
   return IS_TERMUX ? "android" : IS_WINDOWS ? "windows" : IS_MAC ? "mac" : "linux";
 }
 
-function getAppStoreSearchUrl(appName, req) {
+function getAppStoreTargets(appName, req) {
   const term = encodeURIComponent(String(appName || "").trim());
   const platform = detectClientPlatform(req);
-  if (platform === "ios") return "https://apps.apple.com/in/search?term=" + term;
-  if (platform === "android") return "https://play.google.com/store/search?q=" + term + "&c=apps";
-  if (platform === "windows") return "ms-windows-store://search/?query=" + term;
-  if (platform === "mac") return "https://apps.apple.com/us/search?term=" + term;
-  return "https://flathub.org/apps/search?q=" + term;
+
+  // Try the device's native store scheme first, then expose an HTTPS fallback.
+  // The browser must perform navigation because the terminal may run on a different OS
+  // than the device displaying the local JARVIS page (for example, iSH on iPhone).
+  if (platform === "ios") {
+    return {
+      platform,
+      appUrl: "itms-apps://itunes.apple.com/in/search?term=" + term + "&entity=software",
+      fallbackUrl: "https://apps.apple.com/in/search?term=" + term
+    };
+  }
+  if (platform === "android") {
+    return {
+      platform,
+      appUrl: "market://search?q=" + term + "&c=apps",
+      fallbackUrl: "https://play.google.com/store/search?q=" + term + "&c=apps"
+    };
+  }
+  if (platform === "windows") {
+    return {
+      platform,
+      appUrl: "ms-windows-store://search/?query=" + term,
+      fallbackUrl: "https://apps.microsoft.com/search?query=" + term
+    };
+  }
+  if (platform === "mac") {
+    return {
+      platform,
+      appUrl: "macappstore://itunes.apple.com/search?term=" + term,
+      fallbackUrl: "https://apps.apple.com/us/search?term=" + term
+    };
+  }
+  const fallbackUrl = "https://flathub.org/apps/search?q=" + term;
+  return { platform, appUrl: fallbackUrl, fallbackUrl };
 }
 
 function openAppStoreSearch(appName, req) {
-  // Store navigation is performed by the browser using the URL returned in the API response.
-  // This avoids launching the store twice and supports iSH on iPhone, where the terminal host
-  // reports Linux even though the browser/device is iOS.
-  return Boolean(getAppStoreSearchUrl(appName, req));
+  // Navigation is intentionally done by the browser, not by the terminal process.
+  return Boolean(getAppStoreTargets(appName, req).appUrl);
 }
 
 // ═══════════════════════════════════════
@@ -719,13 +746,15 @@ app.post("/api/command", async (req, res) => {
         mode: "offline", appAction: "install-needs-name"
       });
     }
-    const storeUrl = getAppStoreSearchUrl(appName, req);
+    const storeTargets = getAppStoreTargets(appName, req);
     const opened = await openAppStoreSearch(appName, req);
     return reply(res, opened
       ? "I opened the official app-store search for " + appName + ". Check the exact app and publisher, then confirm installation in the store."
       : "I couldn't open the app store automatically. Open your device's official store and search for " + appName + ".", {
-        mode: "offline", appAction: "install-search", appName, storeUrl,
-        storePlatform: detectClientPlatform(req)
+        mode: "offline", appAction: "install-search", appName,
+        storeUrl: storeTargets.appUrl,
+        storeFallbackUrl: storeTargets.fallbackUrl,
+        storePlatform: storeTargets.platform
       });
   }
 
