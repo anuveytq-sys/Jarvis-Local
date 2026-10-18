@@ -4,13 +4,7 @@ const { GoogleGenAI } = require("@google/genai");
 
 const apiKey = process.env.GEMINI_API_KEY;
 
-if (!apiKey) {
-  throw new Error("GEMINI_API_KEY is missing from .env");
-}
-
-const ai = new GoogleGenAI({
-  apiKey
-});
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 const MODELS = [
   "gemini-3.8-flash",
@@ -49,6 +43,7 @@ const conversationHistory = [];
 const MAX_MESSAGES = 20;
 
 async function askGemini(message) {
+  if (!ai) throw new Error("GEMINI_API_KEY is not configured. Add it to .env to enable online AI answers.");
 
   conversationHistory.push({
     role: "user",

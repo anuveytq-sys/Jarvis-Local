@@ -1,0 +1,18 @@
+#jvi-root{--a:#62efff;position:fixed;inset:0;z-index:2147483000;display:none;overflow:hidden;color:#dcfaff;font-family:Inter,"Segoe UI",Arial,sans-serif;background:#020812}#jvi-root.open{display:block;animation:jvi-in .35s ease both}#jvi-root *{box-sizing:border-box}#jvi-root button,#jvi-root input{font:inherit}#jvi-root button{cursor:pointer}#jvi-root button:focus-visible,#jvi-root input:focus-visible{outline:1px solid var(--a);outline-offset:2px}
+#jvi-root .jvi-backdrop{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,#102a49,#071225 42%,#02050c)}#jvi-root .jvi-backdrop:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#50c8ff0a 1px,transparent 1px),linear-gradient(90deg,#50c8ff0a 1px,transparent 1px);background-size:38px 38px;transform:perspective(600px) rotateX(15deg) scale(1.2);transform-origin:center bottom;mask-image:linear-gradient(transparent,#000 25%,transparent)}
+/* VI panel width correction: slightly wider than the previous compact size, but still slim. */
+@media(min-width:761px){
+ #jvi-root .jvi-grid{grid-template-columns:minmax(0,1.08fr) minmax(0,5.4fr) minmax(0,1fr)!important}
+ #jvi-root .jvi-grid>[data-jvi-panel="left"]{width:100%!important;max-width:clamp(185px,18vw,235px)!important;min-width:0!important;justify-self:start!important}
+ #jvi-root .jvi-grid>[data-jvi-panel="right"]{width:100%!important;max-width:clamp(175px,17vw,220px)!important;min-width:0!important;justify-self:end!important}
+}
+@media(max-width:760px) and (orientation:portrait){
+ #jvi-root .jvi-grid>[data-jvi-panel="left"]{width:34vw!important;max-width:205px!important;min-width:0!important}
+ #jvi-root .jvi-grid>[data-jvi-panel="right"]{width:31vw!important;max-width:188px!important;min-width:0!important}
+}
+@media(max-width:420px) and (orientation:portrait){
+ #jvi-root .jvi-grid>[data-jvi-panel="left"]{width:34vw!important;max-width:145px!important}
+ #jvi-root .jvi-grid>[data-jvi-panel="right"]{width:31vw!important;max-width:132px!important}
+}
+#jvi-root .jvi-holo-core{cursor:pointer}
+#jvi-root .jvi-holo{cursor:text}

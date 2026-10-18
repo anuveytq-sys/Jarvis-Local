@@ -1,0 +1,98 @@
+/* Vision Intelligence UX sizing/interaction enhancement layer. Loaded after the preserved VI base stylesheet. */
+@media(min-width:761px){
+  #jvi-root .jvi-grid{grid-template-columns:minmax(0,1.22fr) minmax(0,4.8fr) minmax(0,1.15fr)!important}
+  #jvi-root .jvi-grid>[data-jvi-panel="left"]{width:100%!important;max-width:clamp(210px,20vw,255px)!important;min-width:0!important;justify-self:start!important}
+  #jvi-root .jvi-grid>[data-jvi-panel="right"]{width:100%!important;max-width:clamp(205px,19vw,245px)!important;min-width:0!important;justify-self:end!important}
+}
+@media(max-width:760px) and (orientation:portrait){
+  #jvi-root .jvi-grid{grid-template-columns:minmax(150px,1.05fr) minmax(0,2.7fr) minmax(145px,1fr)!important}
+  #jvi-root .jvi-grid>[data-jvi-panel="left"]{width:100%!important;max-width:205px!important;min-width:0!important}
+  #jvi-root .jvi-grid>[data-jvi-panel="right"]{width:100%!important;max-width:188px!important;min-width:0!important}
+}
+@media(max-width:420px) and (orientation:portrait){
+  #jvi-root .jvi-grid{grid-template-columns:minmax(125px,1fr) minmax(0,2.2fr) minmax(120px,.95fr)!important}
+  #jvi-root .jvi-grid>[data-jvi-panel="left"]{width:100%!important;max-width:145px!important}
+  #jvi-root .jvi-grid>[data-jvi-panel="right"]{width:100%!important;max-width:132px!important}
+}
+/* Keep long AI/OCR output scrollable instead of allowing it to cover the central core. */
+#jvi-root .jvi-right{min-height:0;height:100%;overflow-y:auto;overflow-x:hidden}
+#jvi-root .jvi-profile{min-height:110px;max-height:clamp(150px,28vh,270px);overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable}
+#jvi-root .jvi-profile-text{max-height:clamp(90px,18vh,170px);overflow-y:auto;overflow-wrap:anywhere;white-space:pre-wrap}
+#jvi-root .jvi-results{min-height:0;max-height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable}
+#jvi-root .jvi-result-card{min-height:0;max-height:100%;overflow-y:auto;overflow-x:hidden}
+/* Preserve the native hidden attribute so the top ☷ restore control can reveal the panel. */
+#jvi-root .jvi-panel-restore[hidden]{display:none!important}
+#jvi-root .jvi-panel-restore:not([hidden]){display:flex!important}
+#jvi-root .jvi-holo-core{cursor:pointer}
+#jvi-root .jvi-holo{cursor:default}
+
+
+/* Reality Intelligence Core: keep the header's footprint stable when scan text is long.
+   Scroll the text area instead of letting it push the central holographic core away. */
+#jvi-root .jvi-center-head{
+  height:clamp(92px,15vh,148px)!important;
+  min-height:92px!important;
+  max-height:148px!important;
+  flex:0 0 auto!important;
+  overflow:hidden!important;
+  align-items:stretch!important;
+}
+#jvi-root .jvi-center-head>div:first-child{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:#286b8a #06101d;
+  padding-right:8px;
+}
+#jvi-root .jvi-center-head>div:first-child::-webkit-scrollbar{width:5px}
+#jvi-root .jvi-center-head>div:first-child::-webkit-scrollbar-thumb{background:#286b8a;border-radius:5px}
+#jvi-root .jvi-center-head .jvi-core-orb{flex:0 0 36px;align-self:center}
+
+
+/* Android/touch-device stability layer.
+   Preserve every environment and control while avoiding repeated GPU-heavy compositing
+   and Android browser viewport-height jumps that can make panels appear to flicker. */
+@media (hover:none) and (pointer:coarse){
+  #neon-nexus .nn-clock,
+  #neon-nexus .nn-panel,
+  #neon-nexus .nn-console{
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+  #neon-nexus .nn-clock{background:rgba(18,9,27,.96)!important}
+  #neon-nexus .nn-panel{
+    background:linear-gradient(145deg,rgba(26,10,33,.97),rgba(10,6,18,.97))!important;
+    contain:layout style;
+    isolation:isolate;
+  }
+  #neon-nexus .nn-network{opacity:.48}
+  #neon-nexus .nn-vignette{box-shadow:none!important}
+  #neon-nexus .nn-core,
+  #neon-nexus .nn-core-inner,
+  #neon-nexus .nn-core-latitude,
+  #neon-nexus .nn-core-glint{backface-visibility:hidden}
+  #jvi-root .jvi-panel,
+  #jvi-root .jvi-results-window,
+  #jvi-root .jvi-profile,
+  #jvi-root .jvi-results{
+    contain:layout style;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+  #jvi-root .jvi-panel{isolation:isolate}
+}
+@media (max-width:740px) and (hover:none) and (pointer:coarse){
+  /* svh is stable while Android's browser bars expand/collapse; keep all six
+     NEON NEXUS panels anchored rather than recalculating against a jumping vh. */
+  #neon-nexus .nn-panel{height:21svh!important}
+  #neon-nexus .nn-panel-env,
+  #neon-nexus .nn-panel-services{top:67px!important}
+  #neon-nexus .nn-panel-tasks,
+  #neon-nexus .nn-panel-memory{top:calc(67px + 21svh + 5px)!important}
+  #neon-nexus .nn-panel-system,
+  #neon-nexus .nn-panel-actions{top:calc(67px + 42svh + 10px)!important}
+  #neon-nexus .nn-core-area{height:35svh!important}
+}

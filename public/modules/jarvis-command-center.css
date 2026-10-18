@@ -1,0 +1,84 @@
+/* JARVIS Command Center — match the Wake Word button, just slightly larger. */
+#jarvis-superpowers {
+  position: fixed !important;
+  left: 6px !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: 78px !important;
+  width: 152px !important;
+  max-width: 152px !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  border-radius: 8px !important;
+  z-index: 2147483642 !important;
+  font: 9px/1.15 system-ui, sans-serif !important;
+}
+
+#jarvis-superpowers .sp-card {
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+#jarvis-superpowers .sp-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 4px !important;
+  width: 100% !important;
+  min-height: 29px !important;
+  height: 29px !important;
+  padding: 4px 6px !important;
+  box-sizing: border-box !important;
+  border-radius: 8px !important;
+}
+
+#jarvis-superpowers .sp-title {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  font-size: 7.5px !important;
+  line-height: 1 !important;
+  letter-spacing: .35px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+#jarvis-superpowers .sp-head button {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  min-height: 20px !important;
+  height: 20px !important;
+  padding: 2px 5px !important;
+  margin: 0 !important;
+  border-radius: 6px !important;
+  font: 700 8px/1 system-ui, sans-serif !important;
+}
+
+#jarvis-superpowers .sp-body {
+  padding: 5px !important;
+}
+
+#jarvis-superpowers button,
+#jarvis-superpowers input {
+  font-size: 8px !important;
+}
+
+@media (max-width: 767px) {
+  #jarvis-superpowers {
+    left: 5px !important;
+    right: auto !important;
+    bottom: 78px !important;
+    width: 145px !important;
+    max-width: 145px !important;
+  }
+
+  #jarvis-superpowers .sp-head {
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 4px 5px !important;
+  }
+}

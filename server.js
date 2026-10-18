@@ -10,7 +10,7 @@ import geminiModule from "./gemini.cjs";
 const { askGemini } = geminiModule;
 const execAsync = promisify(exec);
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -25,6 +25,11 @@ const PLATFORM = process.platform; // 'win32' | 'darwin' | 'linux'
 const IS_WINDOWS = PLATFORM === "win32";
 const IS_MAC = PLATFORM === "darwin";
 const IS_LINUX = PLATFORM === "linux";
+const IS_TERMUX = IS_LINUX && (
+  Boolean(process.env.TERMUX_VERSION) ||
+  String(process.env.PREFIX || "").toLowerCase().includes("com.termux") ||
+  /android/i.test(os.release())
+);
 
 function run(command, timeout = 12000) {
   return new Promise((resolve) => {
@@ -59,26 +64,9 @@ function clean(text) {
 }
 
 function quote(text) {
-  if (IS_WINDOWS) {
-    return `"${String(text).replace(/"/g, '\\"')}
-
-
-// ═══════════════════════════════════════
-// ADVANCED APP LAUNCHER (Termux)
-// ═══════════════════════════════════════
-
-
-
-
-
-
-
-
-
-
-"`;
-  }
-  return "'" + String(text).replace(/'/g, "'\\''") + "'";
+  const value = String(text);
+  if (IS_WINDOWS) return '"' + value.replace(/"/g, '\\"') + '"';
+  return "'" + value.replace(/'/g, "'\\''") + "'";
 }
 
 
@@ -215,6 +203,7 @@ async function openUrl(url) {
   let cmd;
   if (IS_WINDOWS) cmd = `start "" ${quote(url)}`;
   else if (IS_MAC) cmd = `open ${quote(url)}`;
+  else if (IS_TERMUX) cmd = `if command -v termux-open-url >/dev/null 2>&1; then termux-open-url ${quote(url)}; elif command -v am >/dev/null 2>&1; then am start -a android.intent.action.VIEW -d ${quote(url)}; else echo 'Install termux-tools to open URLs from JARVIS.' >&2; exit 127; fi`;
   else cmd = `xdg-open ${quote(url)}`;
   return run(cmd);
 }
@@ -223,10 +212,10 @@ async function openPath(filePath) {
   let cmd;
   if (IS_WINDOWS) cmd = `start "" ${quote(filePath)}`;
   else if (IS_MAC) cmd = `open ${quote(filePath)}`;
+  else if (IS_TERMUX) cmd = `if command -v termux-open >/dev/null 2>&1; then termux-open ${quote(filePath)}; elif command -v am >/dev/null 2>&1; then am start -a android.intent.action.VIEW -d ${quote('file://' + filePath)}; else echo 'Install termux-tools to open files from JARVIS.' >&2; exit 127; fi`;
   else cmd = `xdg-open ${quote(filePath)}`;
   return run(cmd);
 }
-
 // Common desktop apps (cross-platform where possible)
 
 
@@ -272,7 +261,13 @@ const FILE_ROOTS = [
   path.join(HOME, "Desktop"),
   path.join(HOME, "Documents"),
   path.join(HOME, "Downloads"),
-  path.join(HOME, "Pictures")
+  path.join(HOME, "Pictures"),
+  ...(IS_TERMUX ? [
+    path.join(HOME, "storage", "shared"),
+    path.join(HOME, "storage", "downloads"),
+    "/storage/emulated/0",
+    "/sdcard"
+  ] : [])
 ];
 
 const MAX_FILE_RESULTS = 40;
@@ -439,6 +434,19 @@ async function handleFileCommand(query, res) {
 
 async function getBattery() {
   try {
+    if (IS_TERMUX) {
+      const r = await run("termux-battery-status");
+      if (r.output) {
+        try {
+          const data = JSON.parse(r.output);
+          const pct = Number(data.percentage);
+          if (Number.isFinite(pct)) {
+            const status = data.status ? " (" + String(data.status).toLowerCase() + ")" : "";
+            return "Battery approximately " + pct + "% remaining" + status + ".";
+          }
+        } catch {}
+      }
+    }
     if (IS_LINUX) {
       const r = await run("upower -i $(upower -e | grep BAT) 2>/dev/null | grep -E 'percentage|state'");
       if (r.output) return r.output.replace(/\n/g, ". ");
@@ -448,10 +456,8 @@ async function getBattery() {
       if (r.output) return r.output.split("\n").slice(0, 2).join(". ");
     }
     if (IS_WINDOWS) {
-      const r = await run(
-        `powershell -NoProfile -Command "(Get-WmiObject Win32_Battery).EstimatedChargeRemaining"`
-      );
-      if (r.output) return `Battery approximately ${r.output}% remaining.`;
+      const r = await run('powershell -NoProfile -Command "(Get-CimInstance Win32_Battery).EstimatedChargeRemaining"');
+      if (r.output) return "Battery approximately " + r.output + "% remaining.";
     }
   } catch {}
   return null;
@@ -460,16 +466,19 @@ async function getBattery() {
 async function getStorage() {
   try {
     if (IS_WINDOWS) {
-      const r = await run(
-        `powershell -NoProfile -Command "Get-PSDrive C | Select-Object Used,Free"`
-      );
+      const r = await run('powershell -NoProfile -Command "Get-PSDrive C | Select-Object Used,Free"');
       return r.output || null;
+    }
+    if (IS_TERMUX) {
+      const target = fs.existsSync("/storage/emulated/0") ? "/storage/emulated/0" : HOME;
+      const r = await run("df -h " + quote(target) + " 2>/dev/null | tail -1");
+      const parts = r.output.split(/\s+/);
+      if (parts.length >= 5) return "Android storage usage is " + parts[4] + ", with " + parts[3] + " available.";
+      return null;
     }
     const r = await run("df -h / 2>/dev/null | tail -1");
     const parts = r.output.split(/\s+/);
-    if (parts.length >= 5) {
-      return `Storage usage is ${parts[4]}, with ${parts[3]} available.`;
-    }
+    if (parts.length >= 5) return "Storage usage is " + parts[4] + ", with " + parts[3] + " available.";
   } catch {}
   return null;
 }
@@ -509,7 +518,7 @@ app.post("/api/command", async (req, res) => {
 
   // Status
   if (has(query, ["are you online", "are you there", "system status", "jarvis status", "status"])) {
-    return reply(res, "All core JARVIS systems are online. Running in desktop mode.");
+    return reply(res, "All core JARVIS systems are online. Running in " + (IS_TERMUX ? "Termux" : IS_WINDOWS ? "Windows" : IS_MAC ? "macOS" : "Linux") + " mode.");
   }
 
   // Time
@@ -706,7 +715,7 @@ app.get("/api/status", (req, res) => {
   res.json({
     online: true,
     name: "JARVIS",
-    mode: "desktop",
+    mode: IS_TERMUX ? "termux" : "desktop",
     platform: PLATFORM,
     voice: true,
     timers: timers.size,
