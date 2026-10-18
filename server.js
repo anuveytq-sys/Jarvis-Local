@@ -71,129 +71,172 @@ function quote(text) {
 
 
 // ═══════════════════════════════════════
-// ADVANCED APP LAUNCHER (Termux)
+// CROSS-PLATFORM APP CATALOG + LAUNCHER
+// Android uses package IDs; desktop systems use native launchers.
+// Unknown app names are handled dynamically and never installed silently.
 // ═══════════════════════════════════════
 
 const KNOWN_APPS = {
-  whatsapp: "com.whatsapp",
-  "whats app": "com.whatsapp",
-  instagram: "com.instagram.android",
-  facebook: "com.facebook.katana",
-  messenger: "com.facebook.orca",
-  telegram: "org.telegram.messenger",
-  twitter: "com.twitter.android",
-  x: "com.twitter.android",
-  snapchat: "com.snapchat.android",
-  linkedin: "com.linkedin.android",
-  discord: "com.discord",
-  reddit: "com.reddit.frontpage",
-  youtube: "com.google.android.youtube",
-  gmail: "com.google.android.gm",
-  chrome: "com.android.chrome",
-  maps: "com.google.android.apps.maps",
-  "google maps": "com.google.android.apps.maps",
-  drive: "com.google.android.apps.docs",
-  photos: "com.google.android.apps.photos",
-  "google photos": "com.google.android.apps.photos",
-  playstore: "com.android.vending",
-  "play store": "com.android.vending",
-  "google play": "com.android.vending",
-  settings: "com.android.settings",
-  camera: "com.android.camera",
-  gallery: "com.miui.gallery",
-  files: "com.google.android.documentsui",
-  "file manager": "com.google.android.documentsui",
-  phone: "com.android.dialer",
-  contacts: "com.android.contacts",
-  messages: "com.android.mms",
-  sms: "com.android.mms",
-  calculator: "com.miui.calculator",
-  clock: "com.android.deskclock",
-  calendar: "com.google.android.calendar",
-  firefox: "org.mozilla.firefox",
-  brave: "com.brave.browser",
-  opera: "com.opera.browser",
-  spotify: "com.spotify.music",
-  netflix: "com.netflix.mediaclient",
-  amazon: "in.amazon.mShop.android.shopping",
-  flipkart: "com.flipkart.android",
-  truecaller: "com.truecaller",
-  paytm: "net.one97.paytm",
-  phonepe: "com.phonepe.app",
-  gpay: "com.google.android.apps.nbu.paisa.user",
-  "google pay": "com.google.android.apps.nbu.paisa.user",
-  uber: "com.ubercab",
-  ola: "com.olacabs.customer",
-  zoom: "us.zoom.videomeetings",
-  teams: "com.microsoft.teams",
-  slack: "com.Slack",
-  notion: "notion.id",
-  chatgpt: "com.openai.chatgpt",
-  claude: "com.anthropic.claude",
-  grok: "ai.x.grok",
-  termux: "com.termux"
+  whatsapp: "com.whatsapp", "whats app": "com.whatsapp",
+  instagram: "com.instagram.android", facebook: "com.facebook.katana",
+  messenger: "com.facebook.orca", telegram: "org.telegram.messenger",
+  twitter: "com.twitter.android", x: "com.twitter.android",
+  snapchat: "com.snapchat.android", linkedin: "com.linkedin.android",
+  discord: "com.discord", reddit: "com.reddit.frontpage",
+  youtube: "com.google.android.youtube", "youtube music": "com.google.android.apps.youtube.music",
+  gmail: "com.google.android.gm", chrome: "com.android.chrome",
+  "google chrome": "com.android.chrome", maps: "com.google.android.apps.maps",
+  "google maps": "com.google.android.apps.maps", drive: "com.google.android.apps.docs",
+  "google drive": "com.google.android.apps.docs", photos: "com.google.android.apps.photos",
+  "google photos": "com.google.android.apps.photos", playstore: "com.android.vending",
+  "play store": "com.android.vending", "google play": "com.android.vending",
+  settings: "com.android.settings", camera: "com.android.camera",
+  gallery: "com.google.android.apps.photos", files: "com.google.android.documentsui",
+  "file manager": "com.google.android.documentsui", phone: "com.google.android.dialer",
+  contacts: "com.google.android.contacts", messages: "com.google.android.apps.messaging",
+  sms: "com.google.android.apps.messaging", calculator: "com.google.android.calculator",
+  clock: "com.google.android.deskclock", calendar: "com.google.android.calendar",
+  firefox: "org.mozilla.firefox", brave: "com.brave.browser",
+  opera: "com.opera.browser", spotify: "com.spotify.music",
+  netflix: "com.netflix.mediaclient", amazon: "in.amazon.mShop.android.shopping",
+  flipkart: "com.flipkart.android", truecaller: "com.truecaller",
+  paytm: "net.one97.paytm", phonepe: "com.phonepe.app",
+  gpay: "com.google.android.apps.nbu.paisa.user", "google pay": "com.google.android.apps.nbu.paisa.user",
+  uber: "com.ubercab", ola: "com.olacabs.customer",
+  zoom: "us.zoom.videomeetings", teams: "com.microsoft.teams",
+  "microsoft teams": "com.microsoft.teams", slack: "com.Slack",
+  notion: "notion.id", chatgpt: "com.openai.chatgpt",
+  claude: "com.anthropic.claude", grok: "ai.x.grok", termux: "com.termux",
+  capcut: "com.lemon.lvoverseas", pinterest: "com.pinterest",
+  tiktok: "com.zhiliaoapp.musically", "microsoft outlook": "com.microsoft.office.outlook",
+  outlook: "com.microsoft.office.outlook", onedrive: "com.microsoft.skydrive",
+  "one drive": "com.microsoft.skydrive", word: "com.microsoft.office.word",
+  excel: "com.microsoft.office.excel", powerpoint: "com.microsoft.office.powerpoint",
+  "google docs": "com.google.android.apps.docs.editors.docs",
+  "google sheets": "com.google.android.apps.docs.editors.sheets",
+  "google slides": "com.google.android.apps.docs.editors.slides",
+  minecraft: "com.mojang.minecraftpe", roblox: "com.roblox.client",
+  steam: "com.valvesoftware.android.steam.community",
+  "play games": "com.google.android.play.games"
 };
 
+const APP_ALIASES = {
+  "music": "spotify", "play music": "spotify", "email": "gmail", "mail": "gmail",
+  "web browser": "chrome", "internet browser": "chrome", "photos app": "photos",
+  "messages app": "messages", "text messages": "messages", "ai": "chatgpt",
+  "ai assistant": "chatgpt", "video app": "youtube", "video player": "youtube",
+  "social media": "instagram", "video calls": "zoom", "meeting app": "zoom",
+  "file browser": "file manager", "documents": "files", "app store": "play store"
+};
+
+const DESKTOP_APPS = {
+  chrome: { win: "chrome", mac: "Google Chrome", linux: "google-chrome" },
+  "google chrome": { win: "chrome", mac: "Google Chrome", linux: "google-chrome" },
+  firefox: { win: "firefox", mac: "Firefox", linux: "firefox" },
+  edge: { win: "msedge", mac: "Microsoft Edge", linux: "microsoft-edge" },
+  "microsoft edge": { win: "msedge", mac: "Microsoft Edge", linux: "microsoft-edge" },
+  spotify: { win: "Spotify", mac: "Spotify", linux: "spotify" },
+  discord: { win: "Discord", mac: "Discord", linux: "discord" },
+  slack: { win: "slack", mac: "Slack", linux: "slack" },
+  vscode: { win: "code", mac: "Visual Studio Code", linux: "code" },
+  "vs code": { win: "code", mac: "Visual Studio Code", linux: "code" },
+  code: { win: "code", mac: "Visual Studio Code", linux: "code" },
+  notepad: { win: "notepad", mac: "TextEdit", linux: "gedit" },
+  calculator: { win: "calc", mac: "Calculator", linux: "gnome-calculator" },
+  terminal: { win: "wt", mac: "Terminal", linux: "x-terminal-emulator" },
+  files: { win: "explorer", mac: "Finder", linux: "nautilus" },
+  "file manager": { win: "explorer", mac: "Finder", linux: "nautilus" },
+  word: { win: "winword", mac: "Microsoft Word", linux: "libreoffice --writer" },
+  excel: { win: "excel", mac: "Microsoft Excel", linux: "libreoffice --calc" },
+  powerpoint: { win: "powerpnt", mac: "Microsoft PowerPoint", linux: "libreoffice --impress" },
+  outlook: { win: "outlook", mac: "Microsoft Outlook", linux: "thunderbird" },
+  paint: { win: "mspaint", mac: "Preview", linux: "pinta" },
+  taskmanager: { win: "taskmgr", mac: "Activity Monitor", linux: "gnome-system-monitor" },
+  "task manager": { win: "taskmgr", mac: "Activity Monitor", linux: "gnome-system-monitor" },
+  settings: { win: "ms-settings:", mac: "System Settings", linux: "gnome-control-center" },
+  zoom: { win: "Zoom", mac: "zoom.us", linux: "zoom" },
+  teams: { win: "ms-teams", mac: "Microsoft Teams", linux: "teams" },
+  chatgpt: { win: "ChatGPT", mac: "ChatGPT", linux: "chatgpt" }
+};
+
+const normalizeAppName = name => String(name || "")
+  .toLowerCase().replace(/^[\s"'“”]+|[\s"'“”]+$/g, "")
+  .replace(/\s+/g, " ").trim();
+
 async function getInstalledPackages() {
-  const result = await run("pm list packages -3");
+  if (!IS_TERMUX) return [];
+  const result = await run("pm list packages");
   if (!result.ok) return [];
-  return result.output
-    .split("\n")
-    .map(line => line.replace("package:", "").trim())
-    .filter(Boolean);
+  return result.output.split("\n").map(line => line.replace(/^package:/, "").trim()).filter(Boolean);
 }
 
 async function findPackageByName(appName) {
-  const name = appName.toLowerCase().replace(/\s+/g, "");
+  const raw = normalizeAppName(appName);
+  const wanted = (APP_ALIASES[raw] || raw).replace(/[^a-z0-9]/g, "");
+  if (!wanted) return null;
   const packages = await getInstalledPackages();
-
-  for (const pkg of packages) {
-    const clean = pkg.toLowerCase().replace(/\./g, "");
-    if (clean.includes(name) || name.includes(clean.split(".").pop())) {
-      return pkg;
-    }
-  }
-  return null;
+  const ranked = packages.map(pkg => {
+    const normalized = pkg.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const score = normalized === wanted ? 0
+      : normalized.endsWith(wanted) ? 1
+      : normalized.includes(wanted) ? 2
+      : wanted.includes(normalized.split(/(?=[a-z])/) .pop() || "!") ? 5 : 99;
+    return { pkg, score };
+  }).filter(item => item.score < 3).sort((a,b) => a.score-b.score || a.pkg.length-b.pkg.length);
+  return ranked[0]?.pkg || null;
 }
 
-async function launchPackage(packageName) {
-  let result = await run(
-    "am start --user 0 -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -p " + quote(packageName)
-  );
+async function launchAndroidPackage(packageName) {
+  const launch = await run("monkey -p " + quote(packageName) + " -c android.intent.category.LAUNCHER 1");
+  if (launch.ok) return true;
+  const intent = await run("am start --user 0 -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -p " + quote(packageName));
+  return intent.ok;
+}
 
-  if (result.ok) return true;
-
-  result = await run("monkey -p " + quote(packageName) + " -c android.intent.category.LAUNCHER 1");
+async function launchDesktopApp(name) {
+  const normalized = normalizeAppName(name);
+  const config = DESKTOP_APPS[normalized];
+  const target = config ? (IS_WINDOWS ? config.win : IS_MAC ? config.mac : config.linux) : String(name).trim();
+  let result;
+  if (IS_WINDOWS) {
+    const escaped = String(target).replace(/'/g, "''");
+    result = await run("powershell -NoProfile -Command \"Start-Process -FilePath '" + escaped + "'\"", 12000);
+  } else if (IS_MAC) {
+    result = await run("open -a " + quote(target), 12000);
+  } else {
+    // Try desktop app IDs first, then the executable name supplied by the user.
+    result = await run("gtk-launch " + quote(target) + " 2>/dev/null", 12000);
+    if (!result.ok) result = await run(quote(target) + " >/dev/null 2>&1 &", 12000);
+  }
   return result.ok;
 }
 
 async function launchKnownApp(name) {
-  const normalized = name.toLowerCase().replace(/\s+/g, " ").trim();
-  console.log("[JARVIS APP] Requested: " + normalized);
-
-  let packageName = KNOWN_APPS[normalized];
-
-  if (!packageName) {
-    packageName = await findPackageByName(normalized);
+  const normalized = normalizeAppName(name).replace(/\s+(?:application|app)$/i, "").trim();
+  const aliased = APP_ALIASES[normalized] || normalized;
+  console.log("[JARVIS APP] Requested: " + normalized + " (" + PLATFORM + ")");
+  if (IS_TERMUX) {
+    let packageName = KNOWN_APPS[aliased] || await findPackageByName(aliased);
+    if (!packageName) return { ok: false, reason: "not-installed", appName: normalized };
+    const success = await launchAndroidPackage(packageName);
+    return { ok: success, appName: normalized, packageName, reason: success ? undefined : "launch-failed" };
   }
-
-  if (!packageName) {
-    return {
-      ok: false,
-      reason: "unknown",
-      appName: normalized
-    };
-  }
-
-  const success = await launchPackage(packageName);
-
-  return {
-    ok: success,
-    appName: normalized,
-    packageName
-  };
+  const success = await launchDesktopApp(aliased);
+  return { ok: success, appName: normalized, reason: success ? undefined : "launch-failed" };
 }
 
+async function openAppStoreSearch(appName) {
+  const term = encodeURIComponent(String(appName || "").trim());
+  if (IS_TERMUX) {
+    // Use the official Google Play listing search; installation is always confirmed by the user.
+    const market = await run("am start -a android.intent.action.VIEW -d " + quote("market://search?q=" + term + "&c=apps"));
+    if (market.ok) return true;
+    return (await openUrl("https://play.google.com/store/search?q=" + term + "&c=apps")).ok;
+  }
+  if (IS_WINDOWS) return (await openUrl("ms-windows-store://search/?query=" + term)).ok;
+  if (IS_MAC) return (await openUrl("https://apps.apple.com/us/search?term=" + term)).ok;
+  return (await openUrl("https://flathub.org/apps/search?q=" + term)).ok;
+}
 
 // ═══════════════════════════════════════
 // DESKTOP OPEN URL / APP
@@ -641,26 +684,38 @@ app.post("/api/command", async (req, res) => {
     return reply(res, count ? `Cancelled \( {count} timer \){count === 1 ? "" : "s"}.` : "There were no active timers.");
   }
 
-  // App launcher
-  if (/^(?:please )?(?:open|launch|start)\s+/.test(query)) {
-    let appName = query
-      .replace(/^(?:please )?(?:open|launch|start)\s+/, "")
-      .replace(/^my\s+/, "")
-      .replace(/^the\s+/, "")
-      .trim();
+  // Native app launch and official-store install/search. Accept natural-language variants.
+  const installMatch = query.match(/^(?:please\\s+)?(?:install|download|get)\\s+(?:the\\s+)?(?:app\\s+)?(.+?)\\s*$/i);
+  if (installMatch) {
+    const appName = installMatch[1].trim().replace(/\\s+(?:application|app)$/i, "");
+    if (!appName) return reply(res, "Tell me which app you want to install.");
+    const opened = await openAppStoreSearch(appName);
+    return reply(res, opened
+      ? "I opened the official app-store search for " + appName + ". Review the publisher and confirm installation in the store."
+      : "I couldn't open the app store. Please open your device's official store and search for " + appName + ".", {
+        mode: "offline", appAction: "install-search", appName
+      });
+  }
 
+  const launchMatch = query.match(/^(?:please\\s+)?(?:(?:can|could|would) you\\s+)?(?:open|launch|start|run|switch to|bring up|show|load)\\s+(?:the\\s+)?(?:app\\s+)?(.+?)\\s*$/i);
+  const bareApp = (() => {
+    const name = normalizeAppName(query).replace(/\\s+(?:application|app)$/i, "");
+    return Object.prototype.hasOwnProperty.call(KNOWN_APPS, name) ||
+      Object.prototype.hasOwnProperty.call(DESKTOP_APPS, name) ||
+      Object.prototype.hasOwnProperty.call(APP_ALIASES, name);
+  })();
+  if (launchMatch || bareApp) {
+    const appName = launchMatch ? launchMatch[1].trim().replace(/\\s+(?:application|app)$/i, "") : query;
     const result = await launchKnownApp(appName);
-    if (result.ok) {
-      return reply(res, `Opening ${appName}.`, { app: appName });
+    if (result.ok) return reply(res, "Opening " + appName + ".", { mode: "offline", appAction: "open", app: appName, packageName: result.packageName });
+    if (result.reason === "not-installed" && IS_TERMUX) {
+      return reply(res, appName + " doesn't appear to be installed. Say 'install " + appName + "' to open its official Play Store search.", {
+        mode: "offline", appAction: "not-installed", appName
+      });
     }
-    if (result.reason === "unknown") {
-      // fallback: try to open as URL or just tell user
-      return reply(
-        res,
-        `I don't have a launcher mapping for "${appName}" yet. You can add it to KNOWN_APPS in server.js.`
-      );
-    }
-    return reply(res, `I tried to open ${appName} but the system did not allow it.`);
+    return reply(res, "I couldn't launch " + appName + " on this device. Check that it is installed and that its app launcher is available.", {
+      mode: "offline", appAction: "launch-failed", appName
+    });
   }
 
   // Help
