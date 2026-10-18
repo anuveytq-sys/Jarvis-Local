@@ -41,7 +41,36 @@ try {
   const command = await commandResponse.json();
   assert.equal(command.ok, true, "local command endpoint should respond");
   assert.match(command.reply, /current time/i, "time command should work without a Gemini key");
-  console.log("JARVIS Local smoke test passed: server starts without an API key, HUD loads, and local commands respond.");
+
+  const installResponse = await fetch(base + "/api/command", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1"
+    },
+    body: JSON.stringify({ command: "install BGMI on my iPhone" })
+  });
+  const install = await installResponse.json();
+  assert.equal(install.appAction, "install-search", "installer intent should be recognized");
+  assert.equal(install.storePlatform, "ios", "iPhone user agent should select the Apple App Store");
+  assert.match(install.storeUrl, /^itms-apps:\/\//, "iPhone should try the native App Store scheme first");
+  assert.match(install.storeFallbackUrl, /^https:\/\/apps\.apple\.com\//, "iPhone should have an HTTPS App Store fallback");
+  assert.match(install.storeUrl, /BGMI/i, "store search should include the requested app");
+
+  const androidResponse = await fetch(base + "/api/command", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/130.0.0.0 Mobile Safari/537.36"
+    },
+    body: JSON.stringify({ command: "download WhatsApp on my Android" })
+  });
+  const androidInstall = await androidResponse.json();
+  assert.equal(androidInstall.storePlatform, "android", "Android user agent should select Google Play");
+  assert.match(androidInstall.storeUrl, /^market:\/\//, "Android should try the native Play Store scheme first");
+  assert.match(androidInstall.storeFallbackUrl, /^https:\/\/play\.google\.com\//, "Android should have a Google Play HTTPS fallback");
+
+  console.log("JARVIS Local smoke test passed: server starts, HUD loads, local commands respond, and iOS/Android installer routing is verified.");
 } finally {
   child.kill("SIGTERM");
   await Promise.race([new Promise(resolve => child.once("exit", resolve)), pause(2000)]);
