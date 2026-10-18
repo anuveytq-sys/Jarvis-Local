@@ -3341,11 +3341,21 @@ async function sendCommand(command) {
           installLink.rel = "noopener";
           document.body.appendChild(installLink);
         }
-        installLink.href = data.storeUrl;
+        // Keep the visible fallback as a regular HTTPS link for browsers that block store schemes.
+        installLink.href = data.storeFallbackUrl || data.storeUrl;
         installLink.textContent = "Open official store results for " + (data.appName || "this app");
         installLink.hidden = false;
-        // Use a normal top-level navigation (not a popup) for iPhone Safari compatibility.
+
+        // Try the native store immediately. If the OS/browser does not hand off, fall back to
+        // the official HTTPS store search. If the store opens, the page should become hidden.
         window.location.href = data.storeUrl;
+        if (data.storeFallbackUrl && data.storeFallbackUrl !== data.storeUrl) {
+          window.setTimeout(() => {
+            if (document.visibilityState !== "hidden") {
+              window.location.href = data.storeFallbackUrl;
+            }
+          }, 900);
+        }
       } catch (storeNavigationError) {
         console.warn("[JARVIS] Store navigation deferred; use the visible store link.", storeNavigationError);
       }
