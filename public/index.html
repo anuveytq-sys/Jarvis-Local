@@ -3319,6 +3319,14 @@ async function sendCommand(command) {
     if (data.reply) {
       speak(data.reply);
     }
+
+    // Store installation is completed by the device owner in the official store.
+    // Follow the store URL returned by the local backend (based on this browser's OS).
+    if (data.appAction === "install-search" && data.storeUrl) {
+      window.setTimeout(() => {
+        window.location.assign(data.storeUrl);
+      }, 650);
+    }
   } catch (err) {
     console.error("[JARVIS]", err);
     speak("There was a communication error with the core.");
