@@ -712,7 +712,11 @@ app.post("/api/command", async (req, res) => {
       Object.prototype.hasOwnProperty.call(DESKTOP_APPS, name) ||
       Object.prototype.hasOwnProperty.call(APP_ALIASES, name);
   })();
-  if (launchMatch || bareApp) {
+  const dynamicAndroidApp = !launchMatch && !bareApp && IS_TERMUX &&
+    query.length <= 48 && !/[?]/.test(query)
+    ? await findPackageByName(normalizeAppName(query).replace(/^the\s+/, "").replace(/\s+(?:application|app)$/i, ""))
+    : null;
+  if (launchMatch || bareApp || dynamicAndroidApp) {
     const appName = launchMatch ? launchMatch[1].trim().replace(/\s+(?:application|app)$/i, "") : query;
     const result = await launchKnownApp(appName);
     if (result.ok) return reply(res, "Opening " + appName + ".", { mode: "offline", appAction: "open", app: appName, packageName: result.packageName });
