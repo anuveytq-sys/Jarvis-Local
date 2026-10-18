@@ -216,7 +216,11 @@ async function launchKnownApp(name) {
   const aliased = APP_ALIASES[normalized] || normalized;
   console.log("[JARVIS APP] Requested: " + normalized + " (" + PLATFORM + ")");
   if (IS_TERMUX) {
-    let packageName = KNOWN_APPS[aliased] || await findPackageByName(aliased);
+    const installedPackages = await getInstalledPackages();
+    const knownPackage = KNOWN_APPS[aliased];
+    let packageName = knownPackage && installedPackages.includes(knownPackage)
+      ? knownPackage
+      : await findPackageByName(aliased);
     if (!packageName) return { ok: false, reason: "not-installed", appName: normalized };
     const success = await launchAndroidPackage(packageName);
     return { ok: success, appName: normalized, packageName, reason: success ? undefined : "launch-failed" };
@@ -703,13 +707,13 @@ app.post("/api/command", async (req, res) => {
 
   const launchMatch = query.match(/^(?:please\\s+)?(?:(?:can|could|would) you\\s+)?(?:open|launch|start|run|switch to|bring up|show|load)\\s+(?:the\\s+)?(?:app\\s+)?(.+?)\\s*$/i);
   const bareApp = (() => {
-    const name = normalizeAppName(query).replace(/\\s+(?:application|app)$/i, "");
+    const name = normalizeAppName(query).replace(/\s+(?:application|app)$/i, "");
     return Object.prototype.hasOwnProperty.call(KNOWN_APPS, name) ||
       Object.prototype.hasOwnProperty.call(DESKTOP_APPS, name) ||
       Object.prototype.hasOwnProperty.call(APP_ALIASES, name);
   })();
   if (launchMatch || bareApp) {
-    const appName = launchMatch ? launchMatch[1].trim().replace(/\\s+(?:application|app)$/i, "") : query;
+    const appName = launchMatch ? launchMatch[1].trim().replace(/\s+(?:application|app)$/i, "") : query;
     const result = await launchKnownApp(appName);
     if (result.ok) return reply(res, "Opening " + appName + ".", { mode: "offline", appAction: "open", app: appName, packageName: result.packageName });
     if (result.reason === "not-installed" && IS_TERMUX) {
