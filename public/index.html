@@ -3320,12 +3320,35 @@ async function sendCommand(command) {
       speak(data.reply);
     }
 
-    // Store installation is completed by the device owner in the official store.
-    // Follow the store URL returned by the local backend (based on this browser's OS).
+    // App-store links must be opened by the browser on the device running JARVIS.
+    // Keep a visible tap target as an iOS/Safari fallback if automatic navigation is deferred.
     if (data.appAction === "install-search" && data.storeUrl) {
-      window.setTimeout(() => {
-        window.location.assign(data.storeUrl);
-      }, 650);
+      try {
+        let installLink = document.getElementById("jarvis-install-store-link");
+        if (!installLink) {
+          installLink = document.createElement("a");
+          installLink.id = "jarvis-install-store-link";
+          installLink.style.cssText = [
+            "position:fixed", "z-index:2147483647", "left:16px", "right:16px",
+            "bottom:calc(18px + env(safe-area-inset-bottom, 0px))",
+            "display:block", "padding:15px 18px", "border:1px solid #00eaff",
+            "border-radius:12px", "background:#03182b", "color:#d8fbff",
+            "font:600 16px/1.35 -apple-system,BlinkMacSystemFont,sans-serif",
+            "text-align:center", "text-decoration:none",
+            "box-shadow:0 0 22px rgba(0,234,255,.3)"
+          ].join(";");
+          installLink.target = "_blank";
+          installLink.rel = "noopener";
+          document.body.appendChild(installLink);
+        }
+        installLink.href = data.storeUrl;
+        installLink.textContent = "Open official store results for " + (data.appName || "this app");
+        installLink.hidden = false;
+        // Use a normal top-level navigation (not a popup) for iPhone Safari compatibility.
+        window.location.href = data.storeUrl;
+      } catch (storeNavigationError) {
+        console.warn("[JARVIS] Store navigation deferred; use the visible store link.", storeNavigationError);
+      }
     }
   } catch (err) {
     console.error("[JARVIS]", err);
