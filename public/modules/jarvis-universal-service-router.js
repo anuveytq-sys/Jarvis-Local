@@ -218,7 +218,24 @@
     } catch (_) {}
   }
 
+  // On the terminal-run local edition, route native app open commands to the
+  // local device command engine rather than always opening a web version.
+  // The public website keeps its normal browser-only service behavior.
+  const LOCAL_NATIVE_NAMES = new Set((
+    "whatsapp whats app instagram facebook messenger telegram twitter x snapchat linkedin discord reddit youtube youtube music gmail chrome google chrome maps google maps drive google drive photos google photos playstore play store google play settings camera gallery files file manager phone contacts messages sms calculator clock calendar firefox brave opera spotify netflix amazon flipkart truecaller paytm phonepe gpay google pay uber ola zoom teams microsoft teams slack notion chatgpt claude grok termux capcut pinterest tiktok outlook microsoft outlook onedrive one drive word excel powerpoint minecraft roblox steam play games vscode vs code code notepad terminal paint taskmanager task manager edge microsoft edge"
+  ).split(/\\s+/));
+
+  function deferToLocalNativeApp(raw) {
+    if (!["localhost", "127.0.0.1", "::1"].includes(location.hostname)) return false;
+    const text = clean(raw).replace(/^the\\s+/, "");
+    const launch = text.match(/^(?:(?:please|can you|could you|would you)\\s+)*(?:open|launch|start|run|switch to|bring up|show|load)\\s+(?:the\\s+)?(?:app\\s+)?(.+?)\\s*$/i);
+    const bare = text.replace(/\\s+(?:application|app)$/i, "");
+    const name = (launch ? launch[1] : bare).replace(/^the\\s+/, "").trim().toLowerCase();
+    return LOCAL_NATIVE_NAMES.has(name);
+  }
+
   function handle(raw) {
+    if (deferToLocalNativeApp(raw)) return false;
     const item = classify(raw);
     if (!item) return false;
     openItem(item);
