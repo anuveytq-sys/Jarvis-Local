@@ -693,9 +693,9 @@ app.post("/api/command", async (req, res) => {
   }
 
   // Native app launch and official-store install/search. Accept natural-language variants.
-  const installMatch = query.match(/^(?:please\\s+)?(?:install|download|get)\\s+(?:the\\s+)?(?:app\\s+)?(.+?)\\s*$/i);
+  const installMatch = query.match(/^(?:please\s+)?(?:install|download|get)\s+(?:the\s+)?(?:app\s+)?(.+?)\s*$/i);
   if (installMatch) {
-    const appName = installMatch[1].trim().replace(/\\s+(?:application|app)$/i, "");
+    const appName = installMatch[1].trim().replace(/\s+(?:application|app)$/i, "");
     if (!appName) return reply(res, "Tell me which app you want to install.");
     const opened = await openAppStoreSearch(appName);
     return reply(res, opened
@@ -705,9 +705,9 @@ app.post("/api/command", async (req, res) => {
       });
   }
 
-  const launchMatch = query.match(/^(?:please\\s+)?(?:(?:can|could|would) you\\s+)?(?:open|launch|start|run|switch to|bring up|show|load)\\s+(?:the\\s+)?(?:app\\s+)?(.+?)\\s*$/i);
+  const launchMatch = query.match(/^(?:please\s+)?(?:(?:can|could|would) you\s+)?(?:open|launch|start|run|switch to|bring up|show|load)\s+(?:the\s+)?(?:app\s+)?(.+?)\s*$/i);
   const bareApp = (() => {
-    const name = normalizeAppName(query).replace(/\s+(?:application|app)$/i, "");
+    const name = normalizeAppName(query).replace(/^the\s+/, "").replace(/\s+(?:application|app)$/i, "");
     return Object.prototype.hasOwnProperty.call(KNOWN_APPS, name) ||
       Object.prototype.hasOwnProperty.call(DESKTOP_APPS, name) ||
       Object.prototype.hasOwnProperty.call(APP_ALIASES, name);
