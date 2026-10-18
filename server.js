@@ -249,19 +249,11 @@ function getAppStoreSearchUrl(appName, req) {
   return "https://flathub.org/apps/search?q=" + term;
 }
 
-async function openAppStoreSearch(appName, req) {
-  const storeUrl = getAppStoreSearchUrl(appName, req);
-  const platform = detectClientPlatform(req);
-  const hostPlatform = IS_TERMUX ? "android" : IS_WINDOWS ? "windows" : IS_MAC ? "mac" : "linux";
-
-  // The server may run in iSH/Termux while the browser belongs to another device.
-  // In that case the client navigates to the correct official store URL.
-  if (platform !== hostPlatform) return true;
-  if (platform === "android" && IS_TERMUX) {
-    const market = await run("am start -a android.intent.action.VIEW -d " + quote("market://search?q=" + encodeURIComponent(String(appName || "").trim()) + "&c=apps"));
-    return market.ok || (await openUrl(storeUrl)).ok;
-  }
-  return (await openUrl(storeUrl)).ok;
+function openAppStoreSearch(appName, req) {
+  // Store navigation is performed by the browser using the URL returned in the API response.
+  // This avoids launching the store twice and supports iSH on iPhone, where the terminal host
+  // reports Linux even though the browser/device is iOS.
+  return Boolean(getAppStoreSearchUrl(appName, req));
 }
 
 // ═══════════════════════════════════════
