@@ -212,7 +212,7 @@ async function launchDesktopApp(name) {
 }
 
 async function launchKnownApp(name) {
-  const normalized = normalizeAppName(name).replace(/\s+(?:application|app)$/i, "").trim();
+  const normalized = normalizeAppName(name).replace(/^the\s+/, "").replace(/\s+(?:application|app)$/i, "").trim();
   const aliased = APP_ALIASES[normalized] || normalized;
   console.log("[JARVIS APP] Requested: " + normalized + " (" + PLATFORM + ")");
   if (IS_TERMUX) {
@@ -653,6 +653,10 @@ app.post("/api/command", async (req, res) => {
 
   // YouTube / Google / URL
   if (has(query, ["open youtube", "launch youtube"])) {
+    if (IS_TERMUX) {
+      const native = await launchKnownApp("youtube");
+      if (native.ok) return reply(res, "Opening the YouTube app.", { mode: "offline", appAction: "open", app: "youtube" });
+    }
     await openUrl("https://youtube.com");
     return reply(res, "Opening YouTube.");
   }
