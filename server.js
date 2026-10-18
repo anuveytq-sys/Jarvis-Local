@@ -60,10 +60,152 @@ function clean(text) {
 
 function quote(text) {
   if (IS_WINDOWS) {
-    return `"${String(text).replace(/"/g, '\\"')}"`;
+    return `"${String(text).replace(/"/g, '\\"')}
+
+
+// ═══════════════════════════════════════
+// ADVANCED APP LAUNCHER (Termux)
+// ═══════════════════════════════════════
+
+
+
+
+
+
+
+
+
+
+"`;
   }
   return "'" + String(text).replace(/'/g, "'\\''") + "'";
 }
+
+
+// ═══════════════════════════════════════
+// ADVANCED APP LAUNCHER (Termux)
+// ═══════════════════════════════════════
+
+const KNOWN_APPS = {
+  whatsapp: "com.whatsapp",
+  "whats app": "com.whatsapp",
+  instagram: "com.instagram.android",
+  facebook: "com.facebook.katana",
+  messenger: "com.facebook.orca",
+  telegram: "org.telegram.messenger",
+  twitter: "com.twitter.android",
+  x: "com.twitter.android",
+  snapchat: "com.snapchat.android",
+  linkedin: "com.linkedin.android",
+  discord: "com.discord",
+  reddit: "com.reddit.frontpage",
+  youtube: "com.google.android.youtube",
+  gmail: "com.google.android.gm",
+  chrome: "com.android.chrome",
+  maps: "com.google.android.apps.maps",
+  "google maps": "com.google.android.apps.maps",
+  drive: "com.google.android.apps.docs",
+  photos: "com.google.android.apps.photos",
+  "google photos": "com.google.android.apps.photos",
+  playstore: "com.android.vending",
+  "play store": "com.android.vending",
+  "google play": "com.android.vending",
+  settings: "com.android.settings",
+  camera: "com.android.camera",
+  gallery: "com.miui.gallery",
+  files: "com.google.android.documentsui",
+  "file manager": "com.google.android.documentsui",
+  phone: "com.android.dialer",
+  contacts: "com.android.contacts",
+  messages: "com.android.mms",
+  sms: "com.android.mms",
+  calculator: "com.miui.calculator",
+  clock: "com.android.deskclock",
+  calendar: "com.google.android.calendar",
+  firefox: "org.mozilla.firefox",
+  brave: "com.brave.browser",
+  opera: "com.opera.browser",
+  spotify: "com.spotify.music",
+  netflix: "com.netflix.mediaclient",
+  amazon: "in.amazon.mShop.android.shopping",
+  flipkart: "com.flipkart.android",
+  truecaller: "com.truecaller",
+  paytm: "net.one97.paytm",
+  phonepe: "com.phonepe.app",
+  gpay: "com.google.android.apps.nbu.paisa.user",
+  "google pay": "com.google.android.apps.nbu.paisa.user",
+  uber: "com.ubercab",
+  ola: "com.olacabs.customer",
+  zoom: "us.zoom.videomeetings",
+  teams: "com.microsoft.teams",
+  slack: "com.Slack",
+  notion: "notion.id",
+  chatgpt: "com.openai.chatgpt",
+  claude: "com.anthropic.claude",
+  grok: "ai.x.grok",
+  termux: "com.termux"
+};
+
+async function getInstalledPackages() {
+  const result = await run("pm list packages -3");
+  if (!result.ok) return [];
+  return result.output
+    .split("\n")
+    .map(line => line.replace("package:", "").trim())
+    .filter(Boolean);
+}
+
+async function findPackageByName(appName) {
+  const name = appName.toLowerCase().replace(/\s+/g, "");
+  const packages = await getInstalledPackages();
+
+  for (const pkg of packages) {
+    const clean = pkg.toLowerCase().replace(/\./g, "");
+    if (clean.includes(name) || name.includes(clean.split(".").pop())) {
+      return pkg;
+    }
+  }
+  return null;
+}
+
+async function launchPackage(packageName) {
+  let result = await run(
+    "am start --user 0 -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -p " + quote(packageName)
+  );
+
+  if (result.ok) return true;
+
+  result = await run("monkey -p " + quote(packageName) + " -c android.intent.category.LAUNCHER 1");
+  return result.ok;
+}
+
+async function launchKnownApp(name) {
+  const normalized = name.toLowerCase().replace(/\s+/g, " ").trim();
+  console.log("[JARVIS APP] Requested: " + normalized);
+
+  let packageName = KNOWN_APPS[normalized];
+
+  if (!packageName) {
+    packageName = await findPackageByName(normalized);
+  }
+
+  if (!packageName) {
+    return {
+      ok: false,
+      reason: "unknown",
+      appName: normalized
+    };
+  }
+
+  const success = await launchPackage(packageName);
+
+  return {
+    ok: success,
+    appName: normalized,
+    packageName
+  };
+}
+
 
 // ═══════════════════════════════════════
 // DESKTOP OPEN URL / APP
@@ -86,54 +228,9 @@ async function openPath(filePath) {
 }
 
 // Common desktop apps (cross-platform where possible)
-const KNOWN_APPS = {
-  // browsers
-  chrome: IS_WINDOWS ? "chrome" : IS_MAC ? "Google Chrome" : "google-chrome",
-  "google chrome": IS_WINDOWS ? "chrome" : IS_MAC ? "Google Chrome" : "google-chrome",
-  firefox: "firefox",
-  edge: IS_WINDOWS ? "msedge" : "microsoft-edge",
 
-  // system
-  notepad: IS_WINDOWS ? "notepad" : IS_MAC ? "TextEdit" : "gedit",
-  calculator: IS_WINDOWS ? "calc" : IS_MAC ? "Calculator" : "gnome-calculator",
-  terminal: IS_WINDOWS ? "wt" : IS_MAC ? "Terminal" : "gnome-terminal",
-  files: IS_WINDOWS ? "explorer" : IS_MAC ? "Finder" : "nautilus",
-  "file manager": IS_WINDOWS ? "explorer" : IS_MAC ? "Finder" : "nautilus",
 
-  // productivity
-  code: "code",
-  "vs code": "code",
-  vscode: "code",
-  spotify: "spotify",
-  discord: "discord",
-  slack: "slack"
-};
 
-async function launchKnownApp(name) {
-  const normalized = name.toLowerCase().replace(/\s+/g, " ").trim();
-  console.log(`[JARVIS APP] Requested: ${normalized}`);
-
-  const app = KNOWN_APPS[normalized];
-  if (!app) {
-    return { ok: false, reason: "unknown", appName: normalized };
-  }
-
-  let cmd;
-  if (IS_WINDOWS) {
-    cmd = `start "" ${app}`;
-  } else if (IS_MAC) {
-    cmd = `open -a ${quote(app)}`;
-  } else {
-    cmd = `${app} >/dev/null 2>&1 &`;
-  }
-
-  const result = await run(cmd);
-  return {
-    ok: result.ok || true, // many desktop launches return immediately
-    appName: normalized,
-    packageName: app
-  };
-}
 
 // ═══════════════════════════════════════
 // TIMERS

@@ -16,3 +16,17 @@ server.before-*.js
 server.before-*.cjs
 server.broken-*.js
 gemini.before-*.cjs
+
+# more old backups
+server.backup*
+server.js.backup
+public.before-*
+
+# Android build output
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.apk
+*.aab
