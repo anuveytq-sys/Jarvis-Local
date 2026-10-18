@@ -4,7 +4,7 @@
   "description": "Terminal-run JARVIS assistant for Termux, PowerShell, and Node.js terminals",
   "main": "index.js",
   "scripts": {
-    "test": "npm run check",
+    "test": "npm run check && node scripts/smoke-test.mjs",
     "start": "node server.js",
     "check": "node --check server.js && node --check gemini.cjs"
   },
