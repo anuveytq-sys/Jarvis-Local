@@ -229,17 +229,39 @@ async function launchKnownApp(name) {
   return { ok: success, appName: normalized, reason: success ? undefined : "launch-failed" };
 }
 
-async function openAppStoreSearch(appName) {
+function detectClientPlatform(req) {
+  const ua = String(req?.headers?.["user-agent"] || "");
+  if (/iPhone|iPad|iPod/i.test(ua)) return "ios";
+  if (/Android/i.test(ua)) return "android";
+  if (/Windows NT/i.test(ua)) return "windows";
+  if (/Macintosh|Mac OS X/i.test(ua)) return "mac";
+  if (/Linux/i.test(ua)) return "linux";
+  return IS_TERMUX ? "android" : IS_WINDOWS ? "windows" : IS_MAC ? "mac" : "linux";
+}
+
+function getAppStoreSearchUrl(appName, req) {
   const term = encodeURIComponent(String(appName || "").trim());
-  if (IS_TERMUX) {
-    // Use the official Google Play listing search; installation is always confirmed by the user.
-    const market = await run("am start -a android.intent.action.VIEW -d " + quote("market://search?q=" + term + "&c=apps"));
-    if (market.ok) return true;
-    return (await openUrl("https://play.google.com/store/search?q=" + term + "&c=apps")).ok;
+  const platform = detectClientPlatform(req);
+  if (platform === "ios") return "https://apps.apple.com/in/search?term=" + term;
+  if (platform === "android") return "https://play.google.com/store/search?q=" + term + "&c=apps";
+  if (platform === "windows") return "ms-windows-store://search/?query=" + term;
+  if (platform === "mac") return "https://apps.apple.com/us/search?term=" + term;
+  return "https://flathub.org/apps/search?q=" + term;
+}
+
+async function openAppStoreSearch(appName, req) {
+  const storeUrl = getAppStoreSearchUrl(appName, req);
+  const platform = detectClientPlatform(req);
+  const hostPlatform = IS_TERMUX ? "android" : IS_WINDOWS ? "windows" : IS_MAC ? "mac" : "linux";
+
+  // The server may run in iSH/Termux while the browser belongs to another device.
+  // In that case the client navigates to the correct official store URL.
+  if (platform !== hostPlatform) return true;
+  if (platform === "android" && IS_TERMUX) {
+    const market = await run("am start -a android.intent.action.VIEW -d " + quote("market://search?q=" + encodeURIComponent(String(appName || "").trim()) + "&c=apps"));
+    return market.ok || (await openUrl(storeUrl)).ok;
   }
-  if (IS_WINDOWS) return (await openUrl("ms-windows-store://search/?query=" + term)).ok;
-  if (IS_MAC) return (await openUrl("https://apps.apple.com/us/search?term=" + term)).ok;
-  return (await openUrl("https://flathub.org/apps/search?q=" + term)).ok;
+  return (await openUrl(storeUrl)).ok;
 }
 
 // ═══════════════════════════════════════
@@ -693,15 +715,25 @@ app.post("/api/command", async (req, res) => {
   }
 
   // Native app launch and official-store install/search. Accept natural-language variants.
-  const installMatch = query.match(/^(?:please\s+)?(?:install|download|get)\s+(?:the\s+)?(?:app\s+)?(.+?)\s*$/i);
+  const installMatch = query.match(/^(?:please\s+)?(?:find\s+and\s+install|search\s+for\s+and\s+install|install|download|get)\s+(?:the\s+)?(?:app\s+)?(.+?)\s*$/i);
   if (installMatch) {
-    const appName = installMatch[1].trim().replace(/\s+(?:application|app)$/i, "");
-    if (!appName) return reply(res, "Tell me which app you want to install.");
-    const opened = await openAppStoreSearch(appName);
+    let appName = installMatch[1].trim()
+      .replace(/\s+(?:on|for)\s+(?:my\s+)?(?:mobile|phone|device|laptop|computer|pc|desktop|iphone|ipad|android|windows|mac(?:book)?)$/i, "")
+      .replace(/^(?:named|called)\s+/i, "")
+      .replace(/\s+(?:application|app)$/i, "")
+      .trim();
+    if (!appName || /^(?:this app|that app|it|the app)$/i.test(appName)) {
+      return reply(res, "Which app should I search for in your device's official app store?", {
+        mode: "offline", appAction: "install-needs-name"
+      });
+    }
+    const storeUrl = getAppStoreSearchUrl(appName, req);
+    const opened = await openAppStoreSearch(appName, req);
     return reply(res, opened
-      ? "I opened the official app-store search for " + appName + ". Review the publisher and confirm installation in the store."
-      : "I couldn't open the app store. Please open your device's official store and search for " + appName + ".", {
-        mode: "offline", appAction: "install-search", appName
+      ? "I opened the official app-store search for " + appName + ". Check the exact app and publisher, then confirm installation in the store."
+      : "I couldn't open the app store automatically. Open your device's official store and search for " + appName + ".", {
+        mode: "offline", appAction: "install-search", appName, storeUrl,
+        storePlatform: detectClientPlatform(req)
       });
   }
 
