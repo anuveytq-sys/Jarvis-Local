@@ -207,6 +207,13 @@ document.addEventListener("submit",e=>{if(e.target&&e.target.id==="commandForm"&
 document.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>ask(b.dataset.q,true));
 }
 function dispatchOpen(){install();$("jvi-root").classList.add("open");document.body.classList.add("jvi-active");if(!key())status("KEY REQUIRED")}
+// Stable public API for the local command engine and environment shortcuts.
+window.JARVISVisionIntelligence = {
+  open,
+  close,
+  isOpenCommand: isOpen,
+  isOpen: () => !!$("jvi-root") && $("jvi-root").classList.contains("open")
+};
 function routeMainVoiceCommands(){try{if(typeof recognition==="undefined"||!recognition||recognition.__jviRouted)return;const prior=recognition.onresult;if(typeof prior!=="function")return;recognition.onresult=function(e){const q=e&&e.results&&e.results[0]&&e.results[0][0]&&e.results[0][0].transcript;if(q&&isOpen(q)){dispatchOpen();try{setState("idle")}catch(_){}try{speak("Opening Vision Intelligence.")}catch(_){}return}return prior.call(this,e)};recognition.__jviRouted=true}catch(_){}}
 setTimeout(routeMainVoiceCommands,0);
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});else install();
