@@ -3330,7 +3330,7 @@ async function sendCommand(command) {
     const response = await fetch("/api/command", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ command })
+      body: JSON.stringify({ command, provider: (()=>{try{return sessionStorage.getItem("jarvisAIProvider")||"auto"}catch(_){return "auto"}})(), openRouterKey: (()=>{try{return localStorage.getItem("jarvisOpenRouterKey")||""}catch(_){return ""}})(), openRouterModel: (()=>{try{return localStorage.getItem("jarvisOpenRouterModel")||"openrouter/free"}catch(_){return "openrouter/free"}})() })
     });
 
     const data = await response.json();
