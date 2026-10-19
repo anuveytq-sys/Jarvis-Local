@@ -3304,6 +3304,26 @@ async function sendCommand(command) {
   command = String(command || "").trim();
   if (!command) return;
 
+  // Route Vision Intelligence directly to its local module instead of relying on
+  // a global fetch interceptor or sending an environment-launch phrase to Gemini.
+  if (window.JARVISVisionIntelligence &&
+      typeof window.JARVISVisionIntelligence.isOpenCommand === "function" &&
+      window.JARVISVisionIntelligence.isOpenCommand(command)) {
+    try {
+      window.JARVISLocalBridge?.begin(command);
+      window.JARVISVisionIntelligence.open();
+      window.JARVISLocalBridge?.showResponse("Vision Intelligence environment opened.", { mode: "local" });
+      speak("Opening Vision Intelligence.");
+      return;
+    } catch (visionError) {
+      console.error("[JARVIS Vision Intelligence]", visionError);
+      window.JARVISLocalBridge?.showError("Vision Intelligence could not open: " + (visionError.message || "module error"));
+      speak("Vision Intelligence could not open. Please try again.");
+      return;
+    }
+  }
+
+  window.JARVISLocalBridge?.begin(command);
   setState("thinking");
 
   try {
@@ -3315,6 +3335,7 @@ async function sendCommand(command) {
 
     const data = await response.json();
     console.log("[JARVIS]", data);
+    window.JARVISLocalBridge?.showResponse(data.reply || "Command completed.", data);
 
     if (data.reply) {
       speak(data.reply);
@@ -3362,6 +3383,7 @@ async function sendCommand(command) {
     }
   } catch (err) {
     console.error("[JARVIS]", err);
+    window.JARVISLocalBridge?.showError("There was a communication error with the core: " + (err.message || "server unavailable"));
     speak("There was a communication error with the core.");
   } finally {
     setState("idle");
@@ -3387,51 +3409,90 @@ commandForm.addEventListener("submit", async (e) => {
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
 
+let coreMicCommandPending = false;
+function resumeCoreMicrophoneListeners() {
+  if (window.JARVISLocalWakeWord?.resumeAfterCore) window.JARVISLocalWakeWord.resumeAfterCore();
+  if (window.__JARVISResumeStartupPhrase) window.__JARVISResumeStartupPhrase();
+}
+
 if (SpeechRecognition) {
   recognition = new SpeechRecognition();
   recognition.continuous     = false;
   recognition.interimResults = false;
-  recognition.lang           = "en-US";
+  recognition.lang           = "en-IN";
+  recognition.maxAlternatives = 5;
 
   recognition.onstart = () => {
     setState("listening");
+    voiceButton.classList.add("jlb-listening");
   };
 
   recognition.onresult = async (event) => {
-    const transcript = event.results[0][0].transcript.trim();
-    console.log("[JARVIS VOICE] Heard:", transcript);
+    const alternatives = Array.from(event.results[0] || [])
+      .map(item => String(item.transcript || "").trim())
+      .filter(Boolean);
+    const transcript = alternatives.sort((a, b) => {
+      const score = text => (/\\b(open|start|launch|tell|what|how)\\b/i.test(text) ? 2 : 0) + (/\\b(jarvis|youtube|google|vision)\\b/i.test(text) ? 1 : 0);
+      return score(b) - score(a);
+    })[0] || "";
+    console.log("[JARVIS VOICE] Heard:", transcript, "| Alternatives:", alternatives);
 
     if (transcript) {
-      await sendCommand(transcript);
+      coreMicCommandPending = true;
+      try {
+        await sendCommand(transcript);
+      } finally {
+        coreMicCommandPending = false;
+        resumeCoreMicrophoneListeners();
+      }
     } else {
       setState("idle");
       speak("I didn't catch that.");
+      resumeCoreMicrophoneListeners();
     }
   };
 
   recognition.onerror = (event) => {
     console.warn("[VOICE]", event.error);
     setState("idle");
+    voiceButton.classList.remove("jlb-listening");
 
-    if (event.error === "not-allowed") {
+    if (event.error === "not-allowed" || event.error === "service-not-allowed") {
       speak("Microphone permission is required.");
     } else if (event.error === "no-speech") {
       speak("I didn't hear anything.");
+    } else if (event.error !== "aborted") {
+      speak("The microphone could not start. Please try again.");
     }
+    coreMicCommandPending = false;
+    resumeCoreMicrophoneListeners();
   };
 
-  recognition.onend = () => {};
+  recognition.onend = () => {
+    voiceButton.classList.remove("jlb-listening");
+    if (!coreMicCommandPending) resumeCoreMicrophoneListeners();
+  };
 }
 
-voiceButton.addEventListener("click", () => {
+voiceButton.addEventListener("click", async () => {
   if (!recognition) {
     speak("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
     return;
   }
 
   try {
+    // Prevent the always-on startup/wake listeners from competing with this
+    // one-shot command microphone. They are restored after the command ends.
+    if (window.__JARVISPauseStartupPhrase) window.__JARVISPauseStartupPhrase();
+    if (window.JARVISLocalWakeWord?.pauseForCore) await window.JARVISLocalWakeWord.pauseForCore();
     recognition.start();
-  } catch (e) {}
+  } catch (e) {
+    console.warn("[JARVIS VOICE] Recognition start failed:", e);
+    setState("idle");
+    voiceButton.classList.remove("jlb-listening");
+    speak("The microphone could not start. Please tap the voice button and try again.");
+    resumeCoreMicrophoneListeners();
+  }
 });
 
 /* =========================================================
@@ -3647,5 +3708,6 @@ if (window.speechSynthesis) {
 <script src="./modules/jarvis-vision-intelligence.js?v=local-20261018a"></script>
 <script src="./modules/jarvis-vision-intelligence-enhancement.js?v=local-20261018a"></script>
 <script src="./modules/jarvis-environment-shortcuts.js?v=local-20261018a"></script>
+<script src="./modules/jarvis-local-bridge.js?v=local-20261019a"></script>
 </body>
 </html>
