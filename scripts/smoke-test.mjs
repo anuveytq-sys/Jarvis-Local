@@ -47,6 +47,12 @@ try {
   const visionSource = await visionResponse.text();
   assert.ok(visionSource.includes("window.JARVISVisionIntelligence"), "Vision Intelligence should expose a stable local API");
 
+  const routerResponse = await fetch(base + "/modules/jarvis-universal-service-router.js");
+  assert.equal(routerResponse.status, 200, "universal service router should be served");
+  const routerSource = await routerResponse.text();
+  assert.ok(routerSource.includes("WEB_FIRST_NAMES"), "web services should prefer browser routing on the local HUD");
+  assert.ok(routerSource.includes("JARVISLocalBridge?.showResponse"), "browser-routed commands should update the response panel");
+
   const commandResponse = await fetch(base + "/api/command", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -70,6 +76,29 @@ try {
   assert.match(install.storeUrl, /^itms-apps:\/\//, "iPhone should try the native App Store scheme first");
   assert.match(install.storeFallbackUrl, /^https:\/\/apps\.apple\.com\//, "iPhone should have an HTTPS App Store fallback");
   assert.match(install.storeUrl, /BGMI/i, "store search should include the requested app");
+
+  const deviceInfoResponse = await fetch(base + "/api/command", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ command: "device info" })
+  });
+  const deviceInfo = await deviceInfoResponse.json();
+  assert.match(deviceInfo.reply, /Platform: .+ \(.+\)/, "device information should include platform, release, and architecture");
+
+  const timerResponse = await fetch(base + "/api/command", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ command: "set timer for 1 minute" })
+  });
+  const timer = await timerResponse.json();
+  assert.match(timer.reply, /Timer .* set for 1 minute/i, "timer creation should return a valid response");
+  const cancelTimerResponse = await fetch(base + "/api/command", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ command: "cancel all timers" })
+  });
+  const cancelTimer = await cancelTimerResponse.json();
+  assert.match(cancelTimer.reply, /Cancelled 1 timer\./, "timer cancellation should format its count correctly");
 
   const websiteResponse = await fetch(base + "/api/command", {
     method: "POST",
