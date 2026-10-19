@@ -33,6 +33,20 @@ try {
   const page = await pageResponse.text();
   assert.ok(page.includes('id="commandInput"'), "original local command input must remain");
   assert.ok(page.includes("modules/jarvis-velve.js"), "VELVE module must be referenced");
+  assert.ok(page.includes("modules/jarvis-local-bridge.js"), "local bridge module must be loaded");
+  assert.ok(page.includes("JARVISVisionIntelligence"), "local HUD should expose direct Vision Intelligence routing");
+
+  const bridgeResponse = await fetch(base + "/modules/jarvis-local-bridge.js");
+  assert.equal(bridgeResponse.status, 200, "local bridge module should be served");
+  const bridgeSource = await bridgeResponse.text();
+  assert.ok(bridgeSource.includes("jarvis-wake-word-toggle"), "wake-word control should be implemented");
+  assert.ok(bridgeSource.includes("JARVIS LOCAL BRIDGE"), "response panel should be implemented");
+
+  const visionResponse = await fetch(base + "/modules/jarvis-vision-intelligence.js");
+  assert.equal(visionResponse.status, 200, "Vision Intelligence module should be served");
+  const visionSource = await visionResponse.text();
+  assert.ok(visionSource.includes("window.JARVISVisionIntelligence"), "Vision Intelligence should expose a stable local API");
+
   const commandResponse = await fetch(base + "/api/command", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -57,6 +71,31 @@ try {
   assert.match(install.storeFallbackUrl, /^https:\/\/apps\.apple\.com\//, "iPhone should have an HTTPS App Store fallback");
   assert.match(install.storeUrl, /BGMI/i, "store search should include the requested app");
 
+  const websiteResponse = await fetch(base + "/api/command", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ command: "open youtube" })
+  });
+  const website = await websiteResponse.json();
+  assert.equal(website.ok, true, "website command should respond");
+  assert.equal(website.openUrl, "https://www.youtube.com/", "website navigation should be returned to the browser instead of launched from the Termux shell");
+
+  const searchResponse = await fetch(base + "/api/command", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ command: "search Google for local JARVIS" })
+  });
+  const search = await searchResponse.json();
+  assert.match(search.openUrl || "", /^https:\/\/www\.google\.com\/search\?q=/, "Google search should route through the browser");
+
+  const vagueInstallResponse = await fetch(base + "/api/command", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ command: "install this" })
+  });
+  const vagueInstall = await vagueInstallResponse.json();
+  assert.equal(vagueInstall.appAction, "install-needs-name", "install this should ask for an app name rather than search for an app literally named this");
+
   const androidResponse = await fetch(base + "/api/command", {
     method: "POST",
     headers: {
@@ -70,7 +109,7 @@ try {
   assert.match(androidInstall.storeUrl, /^market:\/\//, "Android should try the native Play Store scheme first");
   assert.match(androidInstall.storeFallbackUrl, /^https:\/\/play\.google\.com\//, "Android should have a Google Play HTTPS fallback");
 
-  console.log("JARVIS Local smoke test passed: server starts, HUD loads, local commands respond, and iOS/Android installer routing is verified.");
+  console.log("JARVIS Local smoke test passed: server/HUD, local bridge + wake UI, Vision API, browser navigation, vague install handling, and iOS/Android store routing are verified.");
 } finally {
   child.kill("SIGTERM");
   await Promise.race([new Promise(resolve => child.once("exit", resolve)), pause(2000)]);
