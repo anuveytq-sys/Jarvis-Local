@@ -578,7 +578,7 @@ async function getDeviceInfo() {
   const arch = os.arch();
   const cpus = os.cpus()?.[0]?.model || "Unknown CPU";
   const mem = Math.round(os.totalmem() / 1024 / 1024 / 1024);
-  return `Device: ${hostname}. Platform: ${platform} \( {release} ( \){arch}). CPU: ${cpus}. Memory: ${mem} GB.`;
+  return `Device: ${hostname}. Platform: ${platform} ${release} (${arch}). CPU: ${cpus}. Memory: ${mem} GB.`;
 }
 
 // ═══════════════════════════════════════
@@ -732,7 +732,7 @@ app.post("/api/command", async (req, res) => {
   if (has(query, ["cancel timer", "cancel all timers", "stop timer", "stop all timers"])) {
     const count = timers.size;
     cancelAllTimers();
-    return reply(res, count ? `Cancelled \( {count} timer \){count === 1 ? "" : "s"}.` : "There were no active timers.");
+    return reply(res, count ? `Cancelled ${count} timer${count === 1 ? "" : "s"}.` : "There were no active timers.");
   }
 
   // Native app launch and official-store install/search. Accept natural-language variants.
@@ -743,7 +743,7 @@ app.post("/api/command", async (req, res) => {
       .replace(/^(?:named|called)\s+/i, "")
       .replace(/\s+(?:application|app)$/i, "")
       .trim();
-    if (!appName || /^(?:this app|that app|it|the app)$/i.test(appName)) {
+    if (!appName || /^(?:this|that|this app|that app|it|the app)$/i.test(appName)) {
       return reply(res, "Which app should I search for in your device's official app store?", {
         mode: "offline", appAction: "install-needs-name"
       });
