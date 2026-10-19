@@ -225,12 +225,25 @@
     "whatsapp|whats app|instagram|facebook|messenger|telegram|twitter|x|snapchat|linkedin|discord|reddit|youtube|youtube music|gmail|chrome|google chrome|maps|google maps|drive|google drive|photos|google photos|playstore|play store|google play|settings|camera|gallery|files|file manager|phone|contacts|messages|sms|calculator|clock|calendar|firefox|brave|opera|spotify|netflix|amazon|flipkart|truecaller|paytm|phonepe|gpay|google pay|uber|ola|zoom|teams|microsoft teams|slack|notion|chatgpt|claude|grok|termux|capcut|pinterest|tiktok|outlook|microsoft outlook|onedrive|one drive|word|excel|powerpoint|google docs|google sheets|google slides|minecraft|roblox|steam|play games|vscode|vs code|code|notepad|terminal|paint|taskmanager|task manager|edge|microsoft edge"
   ).split("|"));
 
+  const WEB_FIRST_NAMES = new Set((
+    "youtube|youtube music|spotify|netflix|prime video|hotstar|disney plus|jiocinema|" +
+    "instagram|facebook|messenger|telegram|whatsapp|discord|reddit|tiktok|pinterest|linkedin|" +
+    "gmail|google maps|google drive|google photos|google docs|google sheets|google slides|" +
+    "chatgpt|claude|grok|outlook|onedrive|amazon|flipkart|steam|roblox|zoom|teams|slack|notion"
+  ).split("|"));
+
   function deferToLocalNativeApp(raw) {
     if (!["localhost", "127.0.0.1", "::1"].includes(location.hostname)) return false;
     const text = clean(raw).replace(/^the\s+/, "");
     const launch = text.match(/^(?:(?:please|can you|could you|would you)\s+)*(?:open|launch|start|run|switch to|bring up|show|load)\s+(?:the\s+)?(?:app\s+)?(.+?)\s*$/i);
-    const bare = text.replace(/\s+(?:application|app)$/i, "");
-    const name = (launch ? launch[1] : bare).replace(/^the\s+/, "").trim().toLowerCase();
+    const explicitApp = /\b(?:app|application)\b/i.test(text);
+    const name = (launch ? launch[1] : text)
+      .replace(/^the\s+/, "")
+      .replace(/\s+(?:application|app)$/i, "")
+      .trim().toLowerCase();
+    // Web services open in the browser by default. Native launch remains available
+    // when the command explicitly says "app" (e.g. "open YouTube app").
+    if (WEB_FIRST_NAMES.has(name) && !explicitApp) return false;
     return LOCAL_NATIVE_NAMES.has(name);
   }
 
