@@ -49,6 +49,11 @@ async function getDeviceInfo(){return`Device: ${os.hostname()}. Platform: ${os.p
 app.post("/api/command",async(req,res)=>{
  const original=String(req.body.command||"").trim();if(!original)return reply(res,"I didn't hear a command.");
  const query=clean(original).replace(/\b(jarvis|hey jarvis|okay jarvis|ok jarvis)\b/g,"").replace(/\s+/g," ").trim();
+ // Route explicit website navigation before device file-opening intent, so names like "YouTube" are not treated as filenames.
+ const earlySearch=query.match(/^(?:search google for|google search for|search for|google)\s+(.+)$/);if(earlySearch)return reply(res,`Searching Google for ${earlySearch[1]}.`,{mode:"offline",openUrl:"https://www.google.com/search?q="+encodeURIComponent(earlySearch[1]),openLabel:"Open Google search results"});
+ if(/^(?:(?:please\s+)?(?:open|launch|visit)\s+(?:the\s+)?youtube(?:\s+website)?|youtube)$/i.test(query))return reply(res,"Opening YouTube.",{mode:"offline",openUrl:"https://www.youtube.com/",openLabel:"Open YouTube"});
+ if(/^(?:(?:please\s+)?(?:open|launch|visit)\s+(?:the\s+)?google(?:\s+website)?|google)$/i.test(query))return reply(res,"Opening Google.",{mode:"offline",openUrl:"https://www.google.com/",openLabel:"Open Google"});
+ const earlyUrl=query.match(/^(?:open|launch|visit)\s+(https?:\/\/\S+)$/);if(earlyUrl)return reply(res,"Opening the requested website.",{mode:"offline",openUrl:earlyUrl[1],openLabel:"Open requested website"});
  const deviceResponse=await handleDeviceCommand(query,res,reply);if(deviceResponse!==null)return deviceResponse;
  const fileResponse=await handleFileCommand(query,res);if(fileResponse!==null)return fileResponse;
  if(has(query,["hello","hi","hey","good morning","good afternoon","good evening"]))return reply(res,"Good to hear from you. JARVIS is online and ready.");
