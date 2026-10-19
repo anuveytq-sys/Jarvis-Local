@@ -688,32 +688,34 @@ app.post("/api/command", async (req, res) => {
     );
   }
 
-  // Google search
+  // Website navigation is returned to the browser client. Do not launch a browser
+  // from the Termux shell: the phone browser is the UI that initiated this command.
   const search = query.match(/^(?:search google for|google search for|search for|google)\s+(.+)$/);
   if (search) {
-    const text = encodeURIComponent(search[1]);
-    await openUrl(`https://www.google.com/search?q=${text}`);
-    return reply(res, `Searching Google for ${search[1]}.`);
+    const destination = "https://www.google.com/search?q=" + encodeURIComponent(search[1]);
+    return reply(res, `Searching Google for ${search[1]}.`, {
+      mode: "offline", openUrl: destination, openLabel: "Open Google search results"
+    });
   }
 
-  // YouTube / Google / URL
-  if (has(query, ["open youtube", "launch youtube"])) {
-    if (IS_TERMUX) {
-      const native = await launchKnownApp("youtube");
-      if (native.ok) return reply(res, "Opening the YouTube app.", { mode: "offline", appAction: "open", app: "youtube" });
-    }
-    await openUrl("https://youtube.com");
-    return reply(res, "Opening YouTube.");
+  // Plain website commands open in the browser; explicit "... app" commands
+  // continue through the native Android/desktop app launcher below.
+  if (/^(?:(?:please\s+)?(?:open|launch|visit)\s+(?:the\s+)?youtube(?:\s+website)?|youtube)$/i.test(query)) {
+    return reply(res, "Opening YouTube.", {
+      mode: "offline", openUrl: "https://www.youtube.com/", openLabel: "Open YouTube"
+    });
   }
-  if (has(query, ["open google", "launch google"])) {
-    await openUrl("https://google.com");
-    return reply(res, "Opening Google.");
+  if (/^(?:(?:please\s+)?(?:open|launch|visit)\s+(?:the\s+)?google(?:\s+website)?|google)$/i.test(query)) {
+    return reply(res, "Opening Google.", {
+      mode: "offline", openUrl: "https://www.google.com/", openLabel: "Open Google"
+    });
   }
 
   const urlMatch = query.match(/^(?:open|launch|visit)\s+(https?:\/\/\S+)$/);
   if (urlMatch) {
-    await openUrl(urlMatch[1]);
-    return reply(res, "Opening the requested website.");
+    return reply(res, "Opening the requested website.", {
+      mode: "offline", openUrl: urlMatch[1], openLabel: "Open requested website"
+    });
   }
 
   // Timer
