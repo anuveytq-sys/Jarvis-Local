@@ -6,7 +6,7 @@
   "scripts": {
     "test": "npm run check && node scripts/smoke-test.mjs",
     "start": "node server.js",
-    "check": "node --check server.js && node --check gemini.cjs && node --check public/modules/jarvis-local-bridge.js && node --check public/modules/jarvis-universal-service-router.js && node --check public/modules/jarvis-vision-intelligence.js"
+    "check": "node --check server.js && node --check device-controls.js && node --check gemini.cjs && node --check public/modules/jarvis-local-bridge.js && node --check public/modules/jarvis-universal-service-router.js && node --check public/modules/jarvis-vision-intelligence.js"
   },
   "keywords": [],
   "author": "",
