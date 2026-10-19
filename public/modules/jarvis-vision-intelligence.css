@@ -1,18 +1,20 @@
-#jvi-root{--a:#62efff;position:fixed;inset:0;z-index:2147483000;display:none;overflow:hidden;color:#dcfaff;font-family:Inter,"Segoe UI",Arial,sans-serif;background:#020812}#jvi-root.open{display:block;animation:jvi-in .35s ease both}#jvi-root *{box-sizing:border-box}#jvi-root button,#jvi-root input{font:inherit}#jvi-root button{cursor:pointer}#jvi-root button:focus-visible,#jvi-root input:focus-visible{outline:1px solid var(--a);outline-offset:2px}
-#jvi-root .jvi-backdrop{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,#102a49,#071225 42%,#02050c)}#jvi-root .jvi-backdrop:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#50c8ff0a 1px,transparent 1px),linear-gradient(90deg,#50c8ff0a 1px,transparent 1px);background-size:38px 38px;transform:perspective(600px) rotateX(15deg) scale(1.2);transform-origin:center bottom;mask-image:linear-gradient(transparent,#000 25%,transparent)}
-/* VI panel width correction: slightly wider than the previous compact size, but still slim. */
-@media(min-width:761px){
- #jvi-root .jvi-grid{grid-template-columns:minmax(0,1.08fr) minmax(0,5.4fr) minmax(0,1fr)!important}
- #jvi-root .jvi-grid>[data-jvi-panel="left"]{width:100%!important;max-width:clamp(185px,18vw,235px)!important;min-width:0!important;justify-self:start!important}
- #jvi-root .jvi-grid>[data-jvi-panel="right"]{width:100%!important;max-width:clamp(175px,17vw,220px)!important;min-width:0!important;justify-self:end!important}
-}
-@media(max-width:760px) and (orientation:portrait){
- #jvi-root .jvi-grid>[data-jvi-panel="left"]{width:34vw!important;max-width:205px!important;min-width:0!important}
- #jvi-root .jvi-grid>[data-jvi-panel="right"]{width:31vw!important;max-width:188px!important;min-width:0!important}
-}
-@media(max-width:420px) and (orientation:portrait){
- #jvi-root .jvi-grid>[data-jvi-panel="left"]{width:34vw!important;max-width:145px!important}
- #jvi-root .jvi-grid>[data-jvi-panel="right"]{width:31vw!important;max-width:132px!important}
-}
-#jvi-root .jvi-holo-core{cursor:pointer}
-#jvi-root .jvi-holo{cursor:text}
+/* JARVIS Local Vision Intelligence — exact visual base from JARVIS-WEB, pinned for UI parity. */
+@import url("https://raw.githubusercontent.com/anuveytq-sys/JARVIS-WEB/5b76480bc0b155fef1e25d57b755e9efa00e3838/docs/jarvis-vision-intelligence.css");
+
+/* Local fallback: keeps the environment visible while the pinned stylesheet loads. */
+#jvi-root{--a:#62efff;position:fixed;inset:0;z-index:2147483000;display:none;overflow:hidden;color:#dcfaff;font-family:Inter,"Segoe UI",Arial,sans-serif;background:#020812}
+#jvi-root.open{display:block}
+#jvi-root *{box-sizing:border-box}
+#jvi-root .jvi-shell{position:relative;display:flex;flex-direction:column;width:100%;height:100%;padding:9px;gap:8px}
+#jvi-root .jvi-top{display:flex;align-items:center;justify-content:space-between;min-height:62px;padding:9px 15px;border:1px solid #62efff4a;background:linear-gradient(105deg,#081c35f2,#030a16ed)}
+#jvi-root .jvi-grid{display:grid;grid-template-columns:minmax(205px,23%) minmax(0,1fr) minmax(230px,25%);gap:8px;min-height:0;flex:1}
+#jvi-root .jvi-panel{min-height:0;position:relative;padding:12px;border:1px solid #52c2ff3d;background:linear-gradient(145deg,#081629ed,#030914f5);overflow:auto}
+#jvi-root .jvi-center{min-height:0;display:flex;flex-direction:column;gap:8px}
+#jvi-root .jvi-holo{position:relative;flex:1;min-height:230px;overflow:hidden;border:1px solid #4b9cb9;background:radial-gradient(ellipse at 50% 47%,#0b3150,#061427 45%,#020811)}
+#jvi-root .jvi-holo-core{position:absolute;left:50%;top:48%;width:clamp(88px,11vw,142px);height:clamp(88px,11vw,142px);transform:translate(-50%,-50%);display:grid;place-items:center;border-radius:50%;border:1px solid #c7ffff;background:radial-gradient(circle at 30% 25%,#f6ffff,#7af5ff 5%,#1486ed 27%,#081b57 65%,#020713);box-shadow:inset -22px -19px 32px #000c,inset 8px 7px 20px #8bffff9c,0 0 32px #00d9ffdd,0 0 95px #007bff85;animation:jvi-float 4s ease-in-out infinite}
+#jvi-root .jvi-holo-core span{font-size:clamp(32px,4vw,55px);color:#e7ffff;text-shadow:0 0 9px #fff,0 0 26px #00eaff}
+#jvi-root .jvi-btn{min-height:36px;border:1px solid #266582;background:#06101e;color:#a5eafa;padding:8px 10px;font-size:8px;font-weight:800;border-radius:4px}
+#jvi-root .jvi-console{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid #3b83a0;background:#051527fa}
+@keyframes jvi-float{0%,100%{transform:translate(-50%,-53%)}50%{transform:translate(-50%,-47%)}}
+@media(max-width:760px){#jvi-root .jvi-grid{grid-template-columns:1fr 1fr}#jvi-root .jvi-center{grid-column:1/-1}#jvi-root .jvi-holo{min-height:210px}}
+@media(max-width:480px){#jvi-root .jvi-grid{grid-template-columns:1fr;grid-template-rows:auto minmax(300px,1fr) auto}#jvi-root .jvi-center{grid-column:1}#jvi-root .jvi-holo{min-height:190px}}
