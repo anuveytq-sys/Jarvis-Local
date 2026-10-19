@@ -17,7 +17,7 @@ const escapePowerShell = s => String(s).replace(/'/g, "''");
 async function command(file, args = [], timeout = 12000) { try { const { stdout, stderr } = await execAsync([file, ...args].map(x => JSON.stringify(String(x))).join(" "), { timeout, windowsHide: true, shell: true }); return { ok: true, output: String(stdout || "").trim(), error: String(stderr || "").trim() }; } catch (e) { return { ok: false, output: String(e.stdout || "").trim(), error: String(e.stderr || e.message || "").trim() }; } }
 function matchesName(fileName, wanted) { const a = clean(fileName), b = clean(wanted); if (!b) return false; if (a === b || path.parse(a).name === b) return true; return a.includes(b) || path.parse(a).name.includes(b); }
 async function findFiles(wanted) {
-  const query = clean(wanted).replace(/^the\\s+/, "").replace(/\\s+(?:file|document)$/, "").trim();
+  const query = clean(wanted).replace(/^the\s+/, "").replace(/\s+(?:file|document)$/, "").trim();
   if (!query) return [];
   const results = [], seen = new Set(); let visited = 0;
   const maxVisited = MAX_VISITED, maxDepth = 9, maxPerRoot = 12000;
