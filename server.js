@@ -56,7 +56,7 @@ app.post("/api/command",async(req,res)=>{
  const earlyUrl=query.match(/^(?:open|launch|visit)\s+(https?:\/\/\S+)$/);if(earlyUrl)return reply(res,"Opening the requested website.",{mode:"offline",openUrl:earlyUrl[1],openLabel:"Open requested website"});
  const deviceResponse=await handleDeviceCommand(query,res,reply);if(deviceResponse!==null)return deviceResponse;
  const fileResponse=await handleFileCommand(query,res);if(fileResponse!==null)return fileResponse;
- if(has(query,["hello","hi","hey","good morning","good afternoon","good evening"]))return reply(res,"Good to hear from you. JARVIS is online and ready.");
+ if(/^(?:hello|hi|hey|good morning|good afternoon|good evening|hello jarvis|hi jarvis|hey jarvis)[.! ]*$/i.test(query))return reply(res,"Good to hear from you. JARVIS is online and ready.");
  if(has(query,["are you online","are you there","system status","jarvis status","status"]))return reply(res,"All core JARVIS systems are online. Running in "+(IS_TERMUX?"Termux":IS_WINDOWS?"Windows":IS_MAC?"macOS":"Linux")+" mode.");
  if(has(query,["what time is it","what is the time","current time","time now","tell me the time"]))return reply(res,`The current time is ${new Date().toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit",second:"2-digit"})}.`);
  if(has(query,["what is today's date","what is the date","today's date","current date","what day is it"]))return reply(res,`Today is ${new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}.`);
