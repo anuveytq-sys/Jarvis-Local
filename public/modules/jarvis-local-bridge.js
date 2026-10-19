@@ -32,7 +32,7 @@
       panel.id = "jarvis-local-bridge";
       panel.setAttribute("role", "status");
       panel.setAttribute("aria-live", "polite");
-      panel.innerHTML = '<div class="jlb-head"><span>JARVIS LOCAL WEB BRIDGE</span><span class="jlb-state" id="jlb-state">READY</span><button class="jlb-close" type="button" aria-label="Hide response panel">×</button></div><div class="jlb-command" id="jlb-command">READY — local command bridge connected.</div><div class="jlb-response" id="jlb-response">Responses from the local JARVIS server will appear here.</div><a class="jlb-link" id="jlb-link" target="_blank" rel="noopener noreferrer">Open destination ↗</a>';
+      panel.innerHTML = '<div class="jlb-head"><span>JARVIS LOCAL BRIDGE</span><span class="jlb-state" id="jlb-state">READY</span><button class="jlb-close" type="button" aria-label="Hide response panel">×</button></div><div class="jlb-command" id="jlb-command">READY — local command bridge connected.</div><div class="jlb-response" id="jlb-response">Responses from the local JARVIS server will appear here.</div><a class="jlb-link" id="jlb-link" target="_blank" rel="noopener noreferrer">Open destination ↗</a>';
       panel.querySelector(".jlb-close").addEventListener("click", () => panel.style.display = "none");
       document.body.appendChild(panel);
     }
