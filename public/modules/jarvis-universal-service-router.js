@@ -251,7 +251,9 @@
     if (deferToLocalNativeApp(raw)) return false;
     const item = classify(raw);
     if (!item) return false;
+    window.JARVISLocalBridge?.begin(raw);
     openItem(item);
+    window.JARVISLocalBridge?.showResponse("Opening " + item.label + ".", { mode: "browser" });
     return true;
   }
 
