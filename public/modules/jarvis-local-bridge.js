@@ -13,8 +13,7 @@
       const style = document.createElement("style");
       style.id = "jarvis-local-bridge-style";
       style.textContent = `
-        #jarvis-local-bridge{position:fixed;z-index:120;top:72px;left:50%;transform:translateX(-50%);width:min(430px,calc(100vw - 28px));max-height:24vh;overflow:auto;display:none;padding:10px 12px;border:1px solid rgba(0,220,255,.42);border-radius:9px;color:#d8fbff;background:linear-gradient(135deg,rgba(2,26,48,.95),rgba(0,7,18,.94));box-shadow:0 0 22px rgba(0,180,255,.13);backdrop-filter:blur(12px);font:11px/1.45 "Segoe UI",Roboto,Arial,sans-serif}
-        #jarvis-local-bridge.visible{display:block}
+        #jarvis-local-bridge{position:fixed;z-index:120;top:72px;left:50%;transform:translateX(-50%);width:min(430px,calc(100vw - 28px));max-height:24vh;overflow:auto;display:block;padding:10px 12px;border:1px solid rgba(0,220,255,.42);border-radius:9px;color:#d8fbff;background:linear-gradient(135deg,rgba(2,26,48,.95),rgba(0,7,18,.94));box-shadow:0 0 22px rgba(0,180,255,.13);backdrop-filter:blur(12px);font:11px/1.45 "Segoe UI",Roboto,Arial,sans-serif}
         #jarvis-local-bridge .jlb-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;color:#62f5ff;font-size:8px;letter-spacing:1.5px}
         #jarvis-local-bridge .jlb-state{color:#65e9ff;white-space:nowrap}
         #jarvis-local-bridge .jlb-command{color:#7eafc4;font-size:10px;overflow-wrap:anywhere;margin-bottom:4px}
@@ -33,8 +32,8 @@
       panel.id = "jarvis-local-bridge";
       panel.setAttribute("role", "status");
       panel.setAttribute("aria-live", "polite");
-      panel.innerHTML = '<div class="jlb-head"><span>JARVIS LOCAL BRIDGE</span><span class="jlb-state" id="jlb-state">READY</span><button class="jlb-close" type="button" aria-label="Hide response panel">×</button></div><div class="jlb-command" id="jlb-command"></div><div class="jlb-response" id="jlb-response"></div><a class="jlb-link" id="jlb-link" target="_blank" rel="noopener noreferrer">Open destination ↗</a>';
-      panel.querySelector(".jlb-close").addEventListener("click", () => panel.classList.remove("visible"));
+      panel.innerHTML = '<div class="jlb-head"><span>JARVIS LOCAL WEB BRIDGE</span><span class="jlb-state" id="jlb-state">READY</span><button class="jlb-close" type="button" aria-label="Hide response panel">×</button></div><div class="jlb-command" id="jlb-command">READY — local command bridge connected.</div><div class="jlb-response" id="jlb-response">Responses from the local JARVIS server will appear here.</div><a class="jlb-link" id="jlb-link" target="_blank" rel="noopener noreferrer">Open destination ↗</a>';
+      panel.querySelector(".jlb-close").addEventListener("click", () => panel.style.display = "none");
       document.body.appendChild(panel);
     }
     let wake = $("jarvis-wake-word-toggle");
@@ -54,7 +53,7 @@
       wake.addEventListener("click", toggleWakeWord);
     }
   }
-  const show = () => $("jarvis-local-bridge")?.classList.add("visible");
+  const show = () => { const p=$("jarvis-local-bridge"); if(p) p.style.display="block"; };
   function begin(command) {
     bootUI();
     $("jlb-command").textContent = "COMMAND / " + clean(command);
@@ -81,7 +80,7 @@
     try { target = new URL(String(url || ""), location.href); } catch (_) { return false; }
     if (!/^https?:$/.test(target.protocol)) return false;
     let opened = null;
-    try { opened = window.open(target.href, "_blank", "noopener,noreferrer"); } catch (_) {}
+    try { opened = window.open(target.href, "_blank"); } catch (_) {}
     const link = $("jlb-link");
     link.href = target.href;
     link.textContent = clean(label) || "Open requested destination ↗";
@@ -195,6 +194,22 @@
   window.JARVISLocalWakeWord = { pauseForCore, resumeAfterCore, isEnabled: () => wakeEnabled, disable: () => { wakeEnabled = false; const b=$("jarvis-wake-word-toggle"); if(b) setWakeLabel("ENABLE WAKE WORD"); const c=wakeRecognition; wakeRecognition=null; if(c) try{c.stop()}catch(_){} } };
   window.__jarvisPauseWakeWordForEnvironment = pauseForCore;
   window.__jarvisResumeWakeWordAfterEnvironment = resumeAfterCore;
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootUI, { once: true });
-  else bootUI();
+
+  function loadScript(src, key) {
+    if (document.querySelector('script[data-jlb="'+key+'"]')) return;
+    const s=document.createElement('script'); s.src=src; s.async=false; s.dataset.jlb=key; document.body.appendChild(s);
+  }
+  function loadStyle(href, key) {
+    if (document.querySelector('link[data-jlb="'+key+'"]')) return;
+    const l=document.createElement('link'); l.rel='stylesheet'; l.href=href; l.dataset.jlb=key; document.head.appendChild(l);
+  }
+  function bootLocalFeatureModules(){
+    loadScript('/modules/jarvis-local-settings.js?v=local-20261019a','settings');
+    loadScript('/modules/jarvis-environment-voice-fix.js?v=local-20261019a','envvoice');
+    loadStyle('/modules/jarvis-vision-intelligence.css?v=local-vision-20261019a','visioncss');
+    loadStyle('/modules/jarvis-vision-intelligence-enhancement.css?v=local-vision-20261019a','visionenhance');
+    loadScript('/modules/jarvis-vision-intelligence.js?v=local-vision-20261019a','visionjs');
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => { bootUI(); bootLocalFeatureModules(); }, { once: true });
+  else { bootUI(); bootLocalFeatureModules(); }
 })();
